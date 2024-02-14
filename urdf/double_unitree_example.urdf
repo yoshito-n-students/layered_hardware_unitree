@@ -1,0 +1,44 @@
+<robot name="single_unitree_example">
+
+    <link name="unitree" />
+
+    <joint name="unitree_joint1" type="continuous">
+        <parent link="unitree" />
+        <child link="none1" />
+    </joint>
+
+    <transmission name="unitree_trans1">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="unitree_joint1">
+            <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="unitree_actuator1">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+
+    <link name="none1" />
+
+    <joint name="unitree_joint2" type="continuous">
+        <parent link="unitree" />
+        <child link="none2" />
+    </joint>
+
+    <transmission name="unitree_trans2">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="unitree_joint2">
+            <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="unitree_actuator2">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+
+    <link name="none2" />
+</robot>
