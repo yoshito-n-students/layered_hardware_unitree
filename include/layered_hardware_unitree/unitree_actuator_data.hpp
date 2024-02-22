@@ -19,6 +19,13 @@ struct UnitreeActuatorData {
     m_cmd.mode = queryMotorMode(motor_type, MotorMode::FOC);
     m_cmd.id = id;
 
+    // Torque Off
+    m_cmd.tau = 0.;
+    m_cmd.dq = 0.;
+    m_cmd.q = 0.;
+    m_cmd.kp = 0.;
+    m_cmd.kd = 0.;
+
     m_data.motorType = motor_type;
   }
 

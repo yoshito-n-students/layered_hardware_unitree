@@ -37,6 +37,16 @@ public:
     sendRecv();
   }
 
+  void setBrakeMode() {
+    data_->m_cmd.mode = queryMotorMode(data_->m_cmd.motorType, MotorMode::BRAKE);
+  }
+
+  void setFOCMode() {
+    data_->m_cmd.mode = queryMotorMode(data_->m_cmd.motorType, MotorMode::FOC);
+  }
+
+
+
   void sendRecv() {
     data_->serial->sendRecv(&data_->m_cmd, &data_->m_data);
   }

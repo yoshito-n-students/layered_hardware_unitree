@@ -27,7 +27,6 @@ public:
     
   virtual void starting() override {
     data_->m_cmd.kd = 0.01;
-    data_->m_cmd.dq = 0.;
     sendRecv();
     readAllStates();
 
@@ -51,10 +50,13 @@ public:
       }
       else {
         data_->m_cmd.dq = data_->vel_cmd * queryGearRatio(data_->m_cmd.motorType);
-        ROS_INFO_STREAM("data_->vel_cmd: " << data_->m_cmd.dq);
+        // ROS_INFO_STREAM("data_->vel_cmd: " << data_->m_cmd.dq);
       }
       prev_vel_cmd_ = data_->vel_cmd;
     }
+
+    // if current velocity & target velocity is 0, set brake mode
+    data_->m_cmd.dq == 0. ? setBrakeMode() : setFOCMode();
     sendRecv();
   }
 
