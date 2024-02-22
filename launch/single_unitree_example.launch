@@ -19,7 +19,7 @@
                 serial_interface: /dev/ttyUSB0
                 actuators:
                     unitree_actuator:
-                        id: 2
+                        id: 3
                         motor_type: GO-M8010-6
                         torque_constant: 2.41
                         operating_mode_map:

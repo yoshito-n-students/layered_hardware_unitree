@@ -1,84 +1,95 @@
-<robot name="quadro_unitree_example">
+<robot name="skid_steer_unitree_example">
+    <link name="base_link"/>
 
-    <link name="unitree" />
-
-    <joint name="unitree_joint1" type="continuous">
-        <parent link="unitree" />
-        <child link="none1" />
+    <link name="fr_wheel"/>
+    <joint name="fr_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="fr_wheel"/>
     </joint>
 
-    <transmission name="unitree_trans1">
+    <transmission name="fr_trans">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="unitree_joint1">
+        <joint name="fr_joint">
             <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
-        <actuator name="unitree_actuator1">
+        <actuator name="fr_actuator">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
-    </transmission>
+    </transmission>  
 
-    <link name="none1" />
-
-    <joint name="unitree_joint2" type="continuous">
-        <parent link="unitree" />
-        <child link="none2" />
+    <link name="fl_wheel">
+      <!-- <inertial>
+        
+      </inertial> -->
+      <!-- <visual>
+          <origin xyz="${xyz}" rpy="${rpy}" />
+          <geometry>
+              <cylinder radius="${radius}" length="${length}" />
+          </geometry>
+          <material name="${name}_material">
+              <color rgba="${rgba}" />
+          </material>
+      </visual>
+      <collision>
+          <origin xyz="${xyz}" rpy="${rpy}" />
+          <geometry>
+              <cylinder radius="${radius}" length="${length}" />
+          </geometry>
+      </collision>       -->
+    </link>
+    <joint name="fl_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="fl_wheel"/>
     </joint>
 
-    <transmission name="unitree_trans2">
+    <transmission name="fl_trans">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="unitree_joint2">
+        <joint name="fl_joint">
             <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
-        <actuator name="unitree_actuator2">
+        <actuator name="fl_actuator">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
-    </transmission>
+    </transmission>  
 
-    <link name="none2" />
-
-    <joint name="unitree_joint3" type="continuous">
-        <parent link="unitree" />
-        <child link="none3" />
+    <link name="rr_wheel"/>
+    <joint name="rr_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="rr_wheel"/>
     </joint>
 
-    <transmission name="unitree_trans3">
+    <transmission name="rr_trans">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="unitree_joint3">
+        <joint name="rr_joint">
             <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
-        <actuator name="unitree_actuator3">
+        <actuator name="rr_actuator">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
-    </transmission>
+    </transmission>  
 
-    <link name="none3" />
-
-    <joint name="unitree_joint4" type="continuous">
-        <parent link="unitree" />
-        <child link="none4" />
+    <link name="rl_wheel"/>
+    <joint name="rl_wheel_joint" type="continuous">
+        <parent link="base_link"/>
+        <child link="rl_wheel"/>
     </joint>
 
-    <transmission name="unitree_trans4">
+    <transmission name="rl_trans">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="unitree_joint4">
+        <joint name="rl_joint">
             <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
-        <actuator name="unitree_actuator4">
+        <actuator name="rl_actuator">
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
-    </transmission>
+    </transmission>  
 
-    <link name="none4" />
 </robot>
