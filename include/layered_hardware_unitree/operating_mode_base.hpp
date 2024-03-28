@@ -8,6 +8,8 @@
 #include <ros/duration.h>
 #include <ros/time.h>
 
+#include <boost/circular_buffer.hpp>
+
 namespace layered_hardware_unitree {
 
 class OperatingModeBase {
@@ -28,12 +30,16 @@ public:
 
   virtual void stopping() = 0;
 
-  void torqueOff() {
+  void setCmdZero() {
     data_->m_cmd.kp = 0.;
     data_->m_cmd.kd = 0.;
     data_->m_cmd.q = 0.;
     data_->m_cmd.dq = 0.;
-    data_->m_cmd.tau = 0.;
+    data_->m_cmd.tau = 0.;    
+  }
+
+  void torqueOff() {
+    setCmdZero();
     sendRecv();
   }
 
@@ -45,15 +51,67 @@ public:
     data_->m_cmd.mode = queryMotorMode(data_->m_cmd.motorType, MotorMode::FOC);
   }
 
+  void setPosition(const double& pos, const double& kp = 0.5) {
+    setCmdZero();
+    data_->m_cmd.kp = kp;
+    data_->m_cmd.q = pos * queryGearRatio(data_->motor_type);
+  }
 
+  void setVelocity(const double& vel, const double& kd = 0.01) {
+    setCmdZero();
+    data_->m_cmd.kd = kd;
+    data_->m_cmd.dq = vel * queryGearRatio(data_->m_cmd.motorType);
+  }
+
+  // double clampTorque(const double& eff) {
+
+  //   return data_->torque_limit < abs(eff) && hasTorqueLimit() ? 
+  //            data_->torque_limit * eff / abs(eff) : eff;
+  // }
+
+  void setTorque(const double& eff) {
+    setCmdZero();
+    data_->m_cmd.tau = eff;
+  }
+
+  bool hasTemperatureLimit() {
+    return data_->temp_limit != 0;
+  }
+
+  bool hasTorqueLimit() {
+    return data_->torque_limits.size() > 1;
+  }
+
+  bool isCommandZero() {
+    return data_->m_cmd.kp == 0. && 
+           data_->m_cmd.kd == 0. &&
+           data_->m_cmd.q == 0. && 
+           data_->m_cmd.dq == 0. &&
+           data_->m_cmd.tau == 0.;            
+  }
 
   void sendRecv() {
     data_->serial->sendRecv(&data_->m_cmd, &data_->m_data);
   }
 
+  struct PosStamp {
+    double pos;
+    ros::Time stamp;
+  };
+
   void readAllStates() {
-    data_->pos = data_->m_data.q;
-    data_->vel = data_->m_data.dq;
+    data_->pos = data_->m_data.q / queryGearRatio(data_->motor_type);
+    // 最小時間10msの角度とタイムスタンプを記録し，記録されたデータから速度を算出する
+    static std::vector<PosStamp> pos_stamps;
+    pos_stamps.push_back({data_->pos, ros::Time::now()});
+    if (pos_stamps.size() > 1 && (pos_stamps.back().stamp - pos_stamps.front().stamp).toSec() > 0.01) {
+      data_->vel = (pos_stamps.back().pos - pos_stamps.front().pos) / ((pos_stamps.back().stamp - pos_stamps.front().stamp).toSec());
+      pos_stamps.erase(pos_stamps.begin());
+    }
+    else if (pos_stamps.size() <= 1) {
+      data_->vel = data_->m_data.dq;
+    }
+
     data_->eff = data_->m_data.tau;
     data_->temperature = data_->m_data.temp;
   }

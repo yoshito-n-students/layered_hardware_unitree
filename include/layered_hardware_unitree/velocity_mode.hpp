@@ -27,6 +27,7 @@ public:
     
   virtual void starting() override {
     data_->m_cmd.kd = 0.01;
+    setFOCMode();
     sendRecv();
     readAllStates();
 
@@ -42,28 +43,66 @@ public:
   virtual void write(const ros::Time &time, const ros::Duration &period) override {
     // write goal position if the goal pos or profile velocity have been updated
     // to make the change affect
+
+    bool is_limit = false;
+
+    // torque limit -------------------------------------------------------------
+    // If the torque limit is set and no stop command is currently provided
+    if (hasTorqueLimit() && !is_stopping_) {
+      // If the torque limit trigger is exceeded
+      if (data_->torque_limits[0] < abs(data_->eff)) {
+        // Change the scale of the speed command value given to the motor for each 
+        // limit between the current torque value and each limit set
+        for (int i = 1; i < data_->torque_limits.size(); i++) {
+          const int n_limits = data_->torque_limits.size() - 1;
+          if (data_->torque_limits[i-1] < abs(data_->eff) && abs(data_->eff) < data_->torque_limits[i]) {
+            double scale = (1 / n_limits) / (data_->torque_limits[i-1] - data_->torque_limits[i]) 
+                            * (abs(data_->eff) - data_->torque_limits[i-1]) + (n_limits - i + 1) / n_limits;
+            setVelocity(data_->vel_cmd * scale);
+            break;
+          } 
+        }
+
+        if (data_->torque_limits.back() < abs(data_->eff)) {
+          setVelocity(0.);
+        }
+        is_limit = true;
+      }    
+    }
+    // --------------------------------------------------------------------------
+
+    // temperature limit --------------------------------------------------------
+    // if over the temperature limit, stop the motor
+    if (data_->temp_limit < data_->temperature && hasTemperatureLimit()) {
+      setVelocity(0.);
+      is_limit = true;
+    }
+    // --------------------------------------------------------------------------
+
     const bool do_write_vel(!std::isnan(data_->vel_cmd) &&
-                            areNotEqual(data_->vel_cmd, prev_vel_cmd_));
+                            data_->vel_cmd != prev_vel_cmd_ &&
+                            !is_limit);
     if (do_write_vel) {
-      if (data_->temp_limit < data_->temperature) {
-        data_->m_cmd.dq = 0.;
+
+      if (data_->vel_cmd == 0 && !is_stopping_) {
+        setPosition(data_->pos);
+        is_stopping_ = true;
       }
       else {
-        data_->m_cmd.dq = data_->vel_cmd * queryGearRatio(data_->m_cmd.motorType);
-        // ROS_INFO_STREAM("data_->vel_cmd: " << data_->m_cmd.dq);
+        setVelocity(data_->vel_cmd);
+        is_stopping_ = false;
       }
-      prev_vel_cmd_ = data_->vel_cmd;
     }
 
-    // if current velocity & target velocity is 0, set brake mode
-    data_->m_cmd.dq == 0. ? setBrakeMode() : setFOCMode();
     sendRecv();
+    prev_vel_cmd_ = data_->vel_cmd;
   }
 
   virtual void stopping() override { torqueOff(); }
 
 private:
   double prev_vel_cmd_;
+  bool is_stopping_;
 };
 }
 

@@ -4,19 +4,21 @@
 #include <memory>
 #include "serialPort/SerialPort.h"
 #include "unitreeMotor/unitreeMotor.h"
+#include <control_toolbox/pid.h>
 
 namespace layered_hardware_unitree {
 
 struct UnitreeActuatorData {
   UnitreeActuatorData(const std::string &_name, SerialPort *const _serial,
                       const std::uint8_t _id, const MotorType &_motor_type, 
-                      const double _torque_constant, const int &_temp_limit)
-      : name(_name), m_cmd(), m_data(), serial(_serial), id(_id), torque_constant(_torque_constant), 
+                      const std::vector<double> _torque_limits, const int &_temp_limit)
+      : name(_name), m_cmd(), m_data(), serial(_serial), id(_id),
+        torque_limits(_torque_limits), 
         motor_type(_motor_type), temp_limit(_temp_limit),
         pos(0.), vel(0.), eff(0.), temperature(0), pos_cmd(0.), vel_cmd(0.), eff_cmd(0.) {
     // initialize motor command & state
     m_cmd.motorType = motor_type;
-    m_cmd.mode = queryMotorMode(motor_type, MotorMode::FOC);
+    m_cmd.mode = queryMotorMode(motor_type, MotorMode::BRAKE);
     m_cmd.id = id;
 
     // Torque Off
@@ -38,9 +40,9 @@ struct UnitreeActuatorData {
   const std::uint8_t id;
 
   // params
-  const double torque_constant;
   MotorType motor_type;
   const int temp_limit;
+  const std::vector<double> torque_limits;
 
   // states
   double pos, vel, eff;

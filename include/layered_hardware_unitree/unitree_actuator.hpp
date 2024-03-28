@@ -67,23 +67,30 @@ public:
       return false;
     }
 
-    // torque constant from param
-    double torque_constant;
-    if (!param_nh.getParam("torque_constant", torque_constant)) {
-      ROS_ERROR_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("torque_constant") << "'");
-      return false;
+    // // torque constant from param
+    // double torque_constant;
+    // if (!param_nh.getParam("torque_constant", torque_constant)) {
+    //   ROS_ERROR_STREAM("UnitreeActuator::init(): Failed to get param '"
+    //                    << param_nh.resolveName("torque_constant") << "'");
+    //   return false;
+    // }
+
+    // get torque limit from parameter
+    std::vector<double> torque_limits;
+    if (!param_nh.getParam("torque_limits", torque_limits)) {
+      ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
+                       << param_nh.resolveName("torque_limits") << "' so it has no torque limits");
     }
 
-    // temperature limit from param
-    int temp_limit = 100;
+    // get temperature limit from parameter
+    int temp_limit = 0;
     if (!param_nh.getParam("temperature_limit", temp_limit)) {
       ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("temperature_limit") << "' so it set 100 C");
-    }    
+                       << param_nh.resolveName("temperature_limit") << "' so it has no temperature limit");
+    }
 
     // allocate data structure
-    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_constant, temp_limit));
+    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_limits, temp_limit));
 
 
     // register actuator states & commands to corresponding hardware interfaces
@@ -253,7 +260,7 @@ private:
     }
     
     cmd.motorType = getMotorType(motor_type);
-    cmd.mode = queryMotorMode(cmd.motorType, MotorMode::FOC);
+    cmd.mode = queryMotorMode(cmd.motorType, MotorMode::BRAKE);
     cmd.id = id;
     MotorData data;
     data.motorType = getMotorType(motor_type);

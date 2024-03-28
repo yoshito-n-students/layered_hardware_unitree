@@ -25,7 +25,7 @@
     <!-- Hardware driver -->
     <node name="example_layered_hardware_node" pkg="layered_hardware" type="layered_hardware_node" output="screen">
         <rosparam>
-            control_frequency: 20
+            control_frequency: 100
             use_expected_period: true
             # upper (controller-side) to bottom (actuator-side)
             layers: [ joint_limits_layer, transmission_layer, unitree_actuator_layer ]
@@ -40,31 +40,33 @@
                     fr_actuator:
                         id: 0
                         motor_type: GO-M8010-6
-                        torque_constant: 2.41
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
+                        torque_limits: [0.1, 0.4]
+                        temperature_limit: 80
                     fl_actuator:
                         id: 1
                         motor_type: GO-M8010-6
-                        torque_constant: 2.41
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
-                    rr_actuator:
-                        id: 2
-                        motor_type: GO-M8010-6
-                        torque_constant: 2.41
-                        operating_mode_map:
-                            velocity: velocity
-                            effort: torque
-                    rl_actuator:
-                        id: 3
-                        motor_type: GO-M8010-6
-                        torque_constant: 2.41
-                        operating_mode_map:
-                            velocity: velocity
-                            effort: torque
+                        torque_limits: [0.1, 0.4]
+                        temperature_limit: 80
+                    # rr_actuator:
+                    #     id: 2
+                    #     motor_type: GO-M8010-6
+                    #     operating_mode_map:
+                    #         velocity: velocity
+                    #         effort: torque
+                    #     torque_limit: 0.01
+                    #     temperature_limit: 80
+                    # rl_actuator:
+                    #     id: 3
+                    #     motor_type: GO-M8010-6
+                    #     operating_mode_map:
+                    #         velocity: velocity
+                    #         effort: torque
         </rosparam>
     </node>
 
@@ -90,8 +92,8 @@
             joint: rl_joint
         diff_drive_controller:
             type: diff_drive_controller/DiffDriveController
-            right_wheel: [fr_joint, rr_joint]
-            left_wheel: [fl_joint, rl_joint]
+            right_wheel: [fr_joint]
+            left_wheel: [fl_joint]
             cmd_vel_timeout: 0.1
             enable_odom_tf: false
             wheel_separation: 0.5
