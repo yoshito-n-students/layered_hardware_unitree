@@ -51,16 +51,24 @@ public:
     data_->m_cmd.mode = queryMotorMode(data_->m_cmd.motorType, MotorMode::FOC);
   }
 
-  void setPosition(const double& pos, const double& kp = 0.5) {
+  void setPosition(const double& pos, const double& kp) {
     setCmdZero();
     data_->m_cmd.kp = kp;
     data_->m_cmd.q = pos * queryGearRatio(data_->motor_type);
   }
 
-  void setVelocity(const double& vel, const double& kd = 0.01) {
+  void setPosition(const double& pos) {
+    setPosition(pos, data_->pos_gain);
+  }
+
+  void setVelocity(const double& vel, const double& kd) {
     setCmdZero();
     data_->m_cmd.kd = kd;
     data_->m_cmd.dq = vel * queryGearRatio(data_->m_cmd.motorType);
+  }
+
+  void setVelocity(const double& vel) {
+    setVelocity(vel, data_->vel_gain);
   }
 
   // double clampTorque(const double& eff) {

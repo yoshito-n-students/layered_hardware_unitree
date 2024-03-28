@@ -89,8 +89,22 @@ public:
                        << param_nh.resolveName("temperature_limit") << "' so it has no temperature limit");
     }
 
+    // get position gain from parameter
+    double pos_gain = 0.5;
+    if (!param_nh.getParam("pos_gain", pos_gain)) {
+      ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
+                       << param_nh.resolveName("pos_gain") << "' so it has use default value: " << pos_gain);
+    }
+
+    // get velocity gain from parameter
+    double vel_gain = 0.01;
+    if (!param_nh.getParam("vel_gain", vel_gain)) {
+      ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
+                       << param_nh.resolveName("vel_gain") << "' so it has use default value: " << vel_gain);
+    }
+
     // allocate data structure
-    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_limits, temp_limit));
+    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_limits, temp_limit, pos_gain, vel_gain));
 
 
     // register actuator states & commands to corresponding hardware interfaces

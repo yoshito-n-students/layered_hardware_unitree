@@ -45,6 +45,8 @@
                             effort: torque
                         torque_limits: [1.0, 2.0]
                         temperature_limit: 80
+                        pos_gain: 0.5
+                        vel_gain: 0.1
                     fl_actuator:
                         id: 2
                         motor_type: GO-M8010-6
@@ -53,6 +55,8 @@
                             effort: torque
                         torque_limits: [1.0, 2.0]
                         temperature_limit: 80
+                        pos_gain: 0.5
+                        vel_gain: 0.1
                     rr_actuator:
                         id: 1
                         motor_type: GO-M8010-6
@@ -61,6 +65,8 @@
                             effort: torque
                         torque_limits: [1.0, 2.0]
                         temperature_limit: 80
+                        pos_gain: 0.5
+                        vel_gain: 0.1
                     rl_actuator:
                         id: 0
                         motor_type: GO-M8010-6
@@ -69,6 +75,8 @@
                             effort: torque
                         torque_limits: [1.0, 2.0]
                         temperature_limit: 80
+                        pos_gain: 0.5
+                        vel_gain: 0.1
         </rosparam>
     </node>
 
