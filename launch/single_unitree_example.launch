@@ -16,12 +16,12 @@
                 type: layered_hardware/TransmissionLayer
             unitree_actuator_layer:
                 type: layered_hardware_unitree/UnitreeActuatorLayer
-                serial_interface: /dev/ttyUSB0
+                serial_interface: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT73B7MT-if00-port0
                 actuators:
                     unitree_actuator:
                         id: 3
                         motor_type: GO-M8010-6
-                        torque_constant: 0.123
+                        temperature_limit: 80
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
