@@ -21,14 +21,14 @@
                     unitree_actuator1:
                         id: 2
                         motor_type: GO-M8010-6
-                        torque_constant: 2.41
+                        torque_constant: 0.123
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
                     unitree_actuator2:
                         id: 0
                         motor_type: GO-M8010-6
-                        torque_constant: 2.41
+                        torque_constant: 0.123
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
