@@ -43,7 +43,7 @@
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
-                        torque_limits: 1.0
+                        torque_limit: 1.0
                         temperature_limit: 80
                         pos_gain: 0.5
                         vel_gain: 0.1
@@ -53,7 +53,7 @@
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
-                        torque_limits: [1.0, 2.0]
+                        torque_limit: [1.0, 2.0]
                         temperature_limit: 80
                         pos_gain: 0.5
                         vel_gain: 0.1
@@ -63,7 +63,7 @@
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
-                        torque_limits: [1.0, 2.0]
+                        torque_limit: [1.0, 2.0]
                         temperature_limit: 80
                         pos_gain: 0.5
                         vel_gain: 0.1
@@ -73,7 +73,7 @@
                         operating_mode_map:
                             velocity: velocity
                             effort: torque
-                        torque_limits: [1.0, 2.0]
+                        torque_limit: [1.0, 2.0]
                         temperature_limit: 80
                         pos_gain: 0.5
                         vel_gain: 0.1
