@@ -87,7 +87,7 @@ public:
   }
 
   bool hasTorqueLimit() {
-    return data_->torque_limits.size() > 1;
+    return data_->torque_limit != 0.;
   }
 
   bool isCommandZero() {
@@ -109,19 +109,28 @@ public:
 
   void readAllStates() {
     data_->pos = data_->m_data.q / queryGearRatio(data_->motor_type);
-    // 最小時間10msの角度とタイムスタンプを記録し，記録されたデータから速度を算出する
-    static std::vector<PosStamp> pos_stamps;
-    pos_stamps.push_back({data_->pos, ros::Time::now()});
-    if (pos_stamps.size() > 1 && (pos_stamps.back().stamp - pos_stamps.front().stamp).toSec() > 0.01) {
-      data_->vel = (pos_stamps.back().pos - pos_stamps.front().pos) / ((pos_stamps.back().stamp - pos_stamps.front().stamp).toSec());
-      pos_stamps.erase(pos_stamps.begin());
-    }
-    else if (pos_stamps.size() <= 1) {
-      data_->vel = data_->m_data.dq;
-    }
+    data_->vel = data_->m_data.dq / queryGearRatio(data_->motor_type);
+    // // 最小時間10msの角度とタイムスタンプを記録し，記録されたデータから速度を算出する
+    // static std::vector<PosStamp> pos_stamps;
+    // pos_stamps.push_back({data_->pos, ros::Time::now()});
+    // if (pos_stamps.size() > 1 && (pos_stamps.back().stamp - pos_stamps.front().stamp).toSec() > 0.01) {
+    //   data_->vel = (pos_stamps.back().pos - pos_stamps.front().pos) / ((pos_stamps.back().stamp - pos_stamps.front().stamp).toSec());
+    //   pos_stamps.erase(pos_stamps.begin());
+    // }
+    // else if (pos_stamps.size() <= 1) {
+    //   data_->vel = data_->m_data.dq;
+    // }
 
     data_->eff = data_->m_data.tau;
     data_->temperature = data_->m_data.temp;
+  }
+
+  // Unitreeのモータ制御仕様から
+  double computeApproximatelyInputTorque(const double& pos_cmd, const double& vel_cmd, const double& eff_cmd) const {
+    const double input_pos = data_->m_cmd.kp * (pos_cmd * queryGearRatio(data_->motor_type) - data_->m_data.q);
+    const double input_vel = data_->m_cmd.kd * (vel_cmd * queryGearRatio(data_->motor_type) - data_->m_data.dq);
+    const double input_eff = data_->eff_cmd;
+    return input_eff + input_vel + input_pos;
   }
 
   //

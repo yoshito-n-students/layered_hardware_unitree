@@ -76,10 +76,10 @@ public:
     // }
 
     // get torque limit from parameter
-    std::vector<double> torque_limits;
-    if (!param_nh.getParam("torque_limits", torque_limits)) {
+    double torque_limit = 0.;
+    if (!param_nh.getParam("torque_limit", torque_limit)) {
       ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("torque_limits") << "' so it has no torque limits");
+                       << param_nh.resolveName("torque_limit") << "' so it has no torque limit");
     }
 
     // get temperature limit from parameter
@@ -104,7 +104,7 @@ public:
     }
 
     // allocate data structure
-    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_limits, temp_limit, pos_gain, vel_gain));
+    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_limit, temp_limit, pos_gain, vel_gain));
 
 
     // register actuator states & commands to corresponding hardware interfaces

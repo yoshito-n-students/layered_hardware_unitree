@@ -10,10 +10,10 @@ namespace layered_hardware_unitree {
 struct UnitreeActuatorData {
   UnitreeActuatorData(const std::string &_name, SerialPort *const _serial,
                       const std::uint8_t _id, const MotorType &_motor_type, 
-                      const std::vector<double> &_torque_limits, const int &_temp_limit,
+                      const double &_torque_limit, const int &_temp_limit,
                       const double &_pos_gain, const double &_vel_gain)
       : name(_name), m_cmd(), m_data(), serial(_serial), id(_id),
-        torque_limits(_torque_limits), 
+        torque_limit(_torque_limit), 
         motor_type(_motor_type), temp_limit(_temp_limit),
         pos_gain(_pos_gain), vel_gain(_vel_gain),
         pos(0.), vel(0.), eff(0.), temperature(0), pos_cmd(0.), vel_cmd(0.), eff_cmd(0.) {
@@ -43,7 +43,7 @@ struct UnitreeActuatorData {
   // params
   MotorType motor_type;
   const int temp_limit;
-  const std::vector<double> torque_limits;
+  const double torque_limit;
   const double pos_gain, vel_gain;
 
   // states

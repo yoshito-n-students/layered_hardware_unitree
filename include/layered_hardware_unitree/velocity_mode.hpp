@@ -26,7 +26,7 @@ public:
       : OperatingModeBase("velocity", data) {}
     
   virtual void starting() override {
-    data_->m_cmd.kd = 0.01;
+    data_->m_cmd.kd = data_->vel_gain;
     setFOCMode();
     sendRecv();
     readAllStates();
@@ -45,29 +45,24 @@ public:
     // to make the change affect
 
     bool is_limit = false;
+    double vel_gain = data_->vel_gain;
 
     // torque limit -------------------------------------------------------------
     // If the torque limit is set and no stop command is currently provided
     if (hasTorqueLimit() && !is_stopping_) {
-      // If the torque limit trigger is exceeded
-      if (data_->torque_limits[0] < abs(data_->eff)) {
-        // Change the scale of the speed command value given to the motor for each 
-        // limit between the current torque value and each limit set
-        for (int i = 1; i < data_->torque_limits.size(); i++) {
-          const int n_limits = data_->torque_limits.size() - 1;
-          if (data_->torque_limits[i-1] < abs(data_->eff) && abs(data_->eff) < data_->torque_limits[i]) {
-            double scale = (1 / n_limits) / (data_->torque_limits[i-1] - data_->torque_limits[i]) 
-                            * (abs(data_->eff) - data_->torque_limits[i-1]) + (n_limits - i + 1) / n_limits;
-            setVelocity(data_->vel_cmd * scale);
-            break;
-          } 
-        }
+      const double approx_input_torque = abs(computeApproximatelyInputTorque(0., data_->vel_cmd, 0.));
 
-        if (data_->torque_limits.back() < abs(data_->eff)) {
-          setVelocity(0.);
-        }
+      // 1. If the computed torque is larger than torque limit
+      if (approx_input_torque > data_->torque_limit && !is_limit) {
+        vel_gain = data_->torque_limit / approx_input_torque * data_->vel_gain;
         is_limit = true;
-      }    
+      }
+
+      // 2. If the output torque is larger than torque limit
+      if (abs(data_->eff) > data_->torque_limit) {
+        vel_gain = data_->torque_limit - abs(data_->eff) * vel_gain;
+        is_limit = true;
+      }
     }
     // --------------------------------------------------------------------------
 
@@ -89,7 +84,7 @@ public:
         is_stopping_ = true;
       }
       else {
-        setVelocity(data_->vel_cmd);
+        setVelocity(data_->vel_cmd, vel_gain);
         is_stopping_ = false;
       }
     }

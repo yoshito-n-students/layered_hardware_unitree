@@ -26,7 +26,7 @@ public:
       : OperatingModeBase("position", data) {}
     
   virtual void starting() override {
-    data_->m_cmd.kp = 0.01;
+    data_->m_cmd.kp = data_->pos_gain;
     data_->m_cmd.q = 0.;
     sendRecv();
     readAllStates();
