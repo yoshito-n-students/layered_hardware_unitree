@@ -60,7 +60,7 @@ public:
 
       // 2. If the output torque is larger than torque limit
       if (abs(data_->eff) > data_->torque_limit) {
-        vel_gain = data_->torque_limit - abs(data_->eff) * vel_gain;
+        vel_gain = data_->torque_limit / abs(data_->eff) * vel_gain;
         is_limit = true;
       }
     }
