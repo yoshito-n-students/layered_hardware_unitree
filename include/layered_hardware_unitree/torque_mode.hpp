@@ -26,12 +26,13 @@ public:
       : OperatingModeBase("torque", data) {}
     
   virtual void starting() override {
-    data_->m_cmd.kd = 0.01;
-    data_->m_cmd.dq = 0.;
+    // data_->m_cmd.kd = 0.01;
+    // data_->m_cmd.dq = 0.;
+    setFOCMode();
     sendRecv();
     readAllStates();
 
-    data_->eff_cmd = data_->eff;
+    // data_->eff_cmd = data_->eff;
     prev_eff_cmd_ = std::numeric_limits< double >::quiet_NaN();    
   }
 
@@ -47,12 +48,13 @@ public:
                             areNotEqual(data_->eff_cmd, prev_eff_cmd_));
     if (do_write_vel) {
       if (data_->temp_limit < data_->temperature) {
-        data_->m_cmd.tau = 0.;
+        setTorque(0.);
       }
       else {
-        data_->m_cmd.tau = data_->eff_cmd;
+        setTorque(data_->eff_cmd);
       }
       prev_eff_cmd_ = data_->eff_cmd;
+      ROS_INFO_STREAM("TOTOTO: " << data_->m_cmd.tau << ", " << data_->m_data.tau);
     }
     sendRecv();
   }

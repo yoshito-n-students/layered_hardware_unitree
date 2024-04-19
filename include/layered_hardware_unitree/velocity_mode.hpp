@@ -43,23 +43,26 @@ public:
   virtual void write(const ros::Time &time, const ros::Duration &period) override {
     // write goal position if the goal pos or profile velocity have been updated
     // to make the change affect
+    sendRecv();
 
     bool is_torque_limit = false;
-    double vel_gain = data_->vel_gain;
+    double vel_gain = data_->vel_gain; // Set default gain
 
     // torque limit -------------------------------------------------------------
     // If the torque limit is set and no stop command is currently provided
     if (hasTorqueLimit() && !is_stopping_) {
-      const double approx_input_torque = abs(computeApproximatelyInputTorque(0., data_->vel_cmd, 0.));
+      const double approx_input_torque = abs(computeApproximatelyInputTorque(0., data_->vel_cmd, 0., 0., vel_gain));
 
       // 1. If the computed torque is larger than torque limit
       if (approx_input_torque > data_->torque_limit) {
-        vel_gain = data_->torque_limit / approx_input_torque * data_->vel_gain;
+        vel_gain = data_->torque_limit / approx_input_torque * vel_gain;
         is_torque_limit = true;
-      }
+      } 
 
       // 2. If the output torque is larger than torque limit
       if (abs(data_->eff) > data_->torque_limit) {
+        // この計算式ではトルクリミットを反映しきることができない
+        // 
         vel_gain = data_->torque_limit / abs(data_->eff) * vel_gain;
         is_torque_limit = true;
       }
@@ -75,8 +78,8 @@ public:
     }
     // --------------------------------------------------------------------------
 
-    const bool do_write_vel(!std::isnan(data_->vel_cmd) &&
-                            data_->vel_cmd != prev_vel_cmd_ || is_torque_limit);
+    const bool do_write_vel((!std::isnan(data_->vel_cmd) &&
+                            data_->vel_cmd != prev_vel_cmd_ ) || is_torque_limit);
     if (do_write_vel) {
 
       if (data_->vel_cmd == 0 && !is_stopping_) {
