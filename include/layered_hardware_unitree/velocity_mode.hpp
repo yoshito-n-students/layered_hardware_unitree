@@ -44,7 +44,7 @@ public:
     // write goal position if the goal pos or profile velocity have been updated
     // to make the change affect
 
-    bool is_limit = false;
+    bool is_torque_limit = false;
     double vel_gain = data_->vel_gain;
 
     // torque limit -------------------------------------------------------------
@@ -53,15 +53,15 @@ public:
       const double approx_input_torque = abs(computeApproximatelyInputTorque(0., data_->vel_cmd, 0.));
 
       // 1. If the computed torque is larger than torque limit
-      if (approx_input_torque > data_->torque_limit && !is_limit) {
+      if (approx_input_torque > data_->torque_limit) {
         vel_gain = data_->torque_limit / approx_input_torque * data_->vel_gain;
-        is_limit = true;
+        is_torque_limit = true;
       }
 
       // 2. If the output torque is larger than torque limit
       if (abs(data_->eff) > data_->torque_limit) {
         vel_gain = data_->torque_limit / abs(data_->eff) * vel_gain;
-        is_limit = true;
+        is_torque_limit = true;
       }
     }
     // --------------------------------------------------------------------------
@@ -70,13 +70,13 @@ public:
     // if over the temperature limit, stop the motor
     if (data_->temp_limit < data_->temperature && hasTemperatureLimit()) {
       setVelocity(0.);
-      is_limit = true;
+      sendRecv();
+      return;
     }
     // --------------------------------------------------------------------------
 
     const bool do_write_vel(!std::isnan(data_->vel_cmd) &&
-                            data_->vel_cmd != prev_vel_cmd_ &&
-                            !is_limit);
+                            data_->vel_cmd != prev_vel_cmd_ || is_torque_limit);
     if (do_write_vel) {
 
       if (data_->vel_cmd == 0 && !is_stopping_) {
