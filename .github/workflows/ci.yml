@@ -37,7 +37,9 @@ jobs:
         with:
           repository: yoshito-n-students/layered_hardware_unitree
           path: src/layered_hardware_unitree
-          submodules: true
+          run: |
+            cd src/layered_hardware_unitree
+            git submodule update --init
       # Checkout misc
       - name: Checkout ros_controll_extensions
         uses: actions/checkout@v4
