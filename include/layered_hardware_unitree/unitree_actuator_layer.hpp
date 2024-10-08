@@ -1,6 +1,7 @@
 #ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 #define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 
+#include <memory>
 
 #include <layered_hardware/layer_base.hpp>
 #include <layered_hardware_unitree/common_namespaces.hpp>
@@ -31,9 +32,8 @@ public:
     // open USB serial device
     std::string port = param< std::string >(param_nh, "serial_interface", "/dev/ttyUSB0");
     try {
-      serial_ = new SerialPort(port);
-    }
-    catch(IOException& e) {
+      serial_ = std::make_shared< SerialPort >(port);
+    } catch (IOException &e) {
       ROS_ERROR_STREAM("UnitreeActuatorLayer::init(): Failed to open SerialPort: " << e.what());
       return false;
     }
@@ -46,8 +46,8 @@ public:
       return false;
     }
     if (ators_param.getType() != XmlRpc::XmlRpcValue::TypeStruct) {
-      ROS_ERROR_STREAM("UnitreeActuatorLayer::init(): Param '"
-                       << param_nh.resolveName("actuators") << "' must be a struct");
+      ROS_ERROR_STREAM("UnitreeActuatorLayer::init(): Param '" << param_nh.resolveName("actuators")
+                                                               << "' must be a struct");
       return false;
     }
 
@@ -59,9 +59,9 @@ public:
       if (!ator->init(ator_param.first, serial_, hw, ator_param_nh)) {
         return false;
       }
-      ROS_INFO_STREAM("UnitreeActuatorLayer::init(): Initialized the actuator '"
-                      << ator_param.first << "'");
-      actuators_.push_back(ator);      
+      ROS_INFO_STREAM("UnitreeActuatorLayer::init(): Initialized the actuator '" << ator_param.first
+                                                                                 << "'");
+      actuators_.push_back(ator);
     }
 
     return true;
@@ -79,7 +79,7 @@ public:
       }
     }
 
-    return true;                            
+    return true;
   }
 
   virtual void doSwitch(const std::list< hi::ControllerInfo > &start_list,
@@ -118,7 +118,7 @@ private:
   }
 
 private:
-  SerialPort* serial_;
+  std::shared_ptr< SerialPort > serial_;
   ControllerSet controllers_;
   std::vector< UnitreeActuatorPtr > actuators_;
 };
