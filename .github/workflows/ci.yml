@@ -21,26 +21,26 @@ jobs:
           sudo apt --yes upgrade
       # Checkout core
       - name: Checkout layered_hardware
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: yoshito-n-students/layered_hardware
           path: src/layered_hardware
       # Checkout extensions
       - name: Checkout layered_hardware_extensions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: yoshito-n-students/layered_hardware_extensions
           path: src/layered_hardware_extensions
       # Checkout dynamixel
       - name: Checkout layered_hardware_unitree
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: yoshito-n-students/layered_hardware_unitree
           path: src/layered_hardware_unitree
           submodules: true
       # Checkout misc
       - name: Checkout ros_controll_extensions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: yoshito-n-students/ros_control_extensions
           path: src/ros_control_extensions
