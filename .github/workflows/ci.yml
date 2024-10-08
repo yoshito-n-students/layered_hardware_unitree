@@ -31,15 +31,16 @@ jobs:
         with:
           repository: yoshito-n-students/layered_hardware_extensions
           path: src/layered_hardware_extensions
-      # Checkout dynamixel
+      # Checkout unitree
       - name: Checkout layered_hardware_unitree
         uses: actions/checkout@v4
         with:
           repository: yoshito-n-students/layered_hardware_unitree
           path: src/layered_hardware_unitree
-          run: |
-            cd src/layered_hardware_unitree
-            git submodule update --init
+      - name: Submodule update
+        run: |
+          cd src/layered_hardware_unitree
+          git submodule update --init
       # Checkout misc
       - name: Checkout ros_controll_extensions
         uses: actions/checkout@v4
