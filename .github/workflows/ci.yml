@@ -1,0 +1,62 @@
+name: CI
+on:
+  push:
+    branches:
+      - add-ci-build-check
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    container:
+      image: ros:noetic-ros-base
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # System update
+      - name: Run apt-upgrade
+        run: |
+          sudo apt update
+          sudo apt --yes upgrade
+      # Checkout core
+      - name: Checkout layered_hardware
+        uses: actions/checkout@v2
+        with:
+          repository: yoshito-n-students/layered_hardware
+          path: src/layered_hardware
+      # Checkout extensions
+      - name: Checkout layered_hardware_extensions
+        uses: actions/checkout@v2
+        with:
+          repository: yoshito-n-students/layered_hardware_extensions
+          path: src/layered_hardware_extensions
+      # Checkout dynamixel
+      - name: Checkout layered_hardware_unitree
+        uses: actions/checkout@v2
+        with:
+          repository: yoshito-n-students/layered_hardware_unitree
+          path: src/layered_hardware_unitree
+      # Checkout misc
+      - name: Checkout ros_controll_extensions
+        uses: actions/checkout@v2
+        with:
+          repository: yoshito-n-students/ros_control_extensions
+          path: src/ros_control_extensions
+      # Install dependencies
+      - name: Run rosdep-install
+        run: |
+          source /opt/ros/noetic/setup.bash
+          sudo apt update
+          rosdep update --rosdistro noetic
+          sudo rosdep install --default-yes -r --ignore-src --from-paths src --rosdistro noetic
+      # catkin_make
+      - name: Build
+        run: |
+          source /opt/ros/noetic/setup.bash
+          catkin_make
+      # run_tests
+      - name: Run tests
+        run: |
+          source /opt/ros/noetic/setup.bash
+          catkin_make run_tests
