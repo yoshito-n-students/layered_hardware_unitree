@@ -19,7 +19,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt --yes upgrade
-          sudo apt install git
+          sudo apt install -y git
       # Checkout core
       - name: Checkout layered_hardware
         uses: actions/checkout@v4
