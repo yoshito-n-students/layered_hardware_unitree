@@ -19,6 +19,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt --yes upgrade
+          sudo apt install git
       # Checkout core
       - name: Checkout layered_hardware
         uses: actions/checkout@v4
@@ -37,10 +38,7 @@ jobs:
         with:
           repository: yoshito-n-students/layered_hardware_unitree
           path: src/layered_hardware_unitree
-      - name: Submodule update
-        run: |
-          cd src/layered_hardware_unitree
-          git submodule update --init
+          submodules: true
       # Checkout misc
       - name: Checkout ros_controll_extensions
         uses: actions/checkout@v4
