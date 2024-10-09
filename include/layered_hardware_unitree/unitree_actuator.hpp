@@ -13,6 +13,7 @@
 #include <layered_hardware_unitree/controller_set.hpp>
 #include <layered_hardware_unitree/operating_mode_base.hpp>
 #include <layered_hardware_unitree/position_mode.hpp>
+#include <layered_hardware_unitree/safe_velocity_mode.hpp>
 #include <layered_hardware_unitree/sdk_utils.hpp>
 #include <layered_hardware_unitree/torque_mode.hpp>
 #include <layered_hardware_unitree/unitree_actuator_data.hpp>
@@ -268,10 +269,12 @@ private:
   OperatingModePtr makeOperatingMode(const std::string &mode_str) const {
     if (mode_str == "position") {
       return std::make_shared< PositionMode >(data_);
-    } else if (mode_str == "velocity") {
+    } else if (mode_str == "safe_velocity") {
       return std::make_shared< VelocityMode >(data_);
     } else if (mode_str == "torque") {
       return std::make_shared< TorqueMode >(data_);
+    } else if (mode_str == "velocity") {
+      return std::make_shared< SafeVelocityMode >(data_);
     }
     ROS_ERROR_STREAM("UnitreeActuator::makeOperatingMode(): Unknown operating mode name '"
                      << mode_str << " for the actuator '" << data_->name
