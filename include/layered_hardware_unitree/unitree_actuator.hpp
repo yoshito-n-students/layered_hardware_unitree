@@ -10,12 +10,13 @@
 #include <hardware_interface_extensions/integer_interface.hpp>
 
 #include <layered_hardware_unitree/common_namespaces.hpp>
-#include <layered_hardware_unitree/operating_mode_base.hpp>
-#include <layered_hardware_unitree/unitree_actuator_data.hpp>
 #include <layered_hardware_unitree/controller_set.hpp>
+#include <layered_hardware_unitree/operating_mode_base.hpp>
 #include <layered_hardware_unitree/position_mode.hpp>
-#include <layered_hardware_unitree/velocity_mode.hpp>
+#include <layered_hardware_unitree/sdk_utils.hpp>
 #include <layered_hardware_unitree/torque_mode.hpp>
+#include <layered_hardware_unitree/unitree_actuator_data.hpp>
+#include <layered_hardware_unitree/velocity_mode.hpp>
 
 #include <ros/console.h>
 #include <ros/duration.h>
@@ -53,12 +54,22 @@ public:
     }
 
     // unitree motor type
-    std::string motor_type;
-    if (!param_nh.getParam("motor_type", motor_type)) {
+    std::string motor_type_str;
+    if (!param_nh.getParam("motor_type", motor_type_str)) {
       ROS_ERROR_STREAM("UnitreeActuator::init(): Failed to get param '"
                        << param_nh.resolveName("motor_type") << "'");
       return false;
-    }    
+    }
+
+    // validate motor type string
+    MotorType motor_type;
+    try {
+      motor_type = toMotorType(motor_type_str);
+    } catch (const std::runtime_error &error) {
+      ROS_ERROR_STREAM("UnitreeActuator::init(): Invalid motor type '" << motor_type_str
+                                                                       << "': " << error.what());
+      return false;
+    }
 
     // find unitree actuator by id
     if (!findMotor(id, motor_type, serial)) {
@@ -67,45 +78,40 @@ public:
       return false;
     }
 
-    // // torque constant from param
-    // double torque_constant;
-    // if (!param_nh.getParam("torque_constant", torque_constant)) {
-    //   ROS_ERROR_STREAM("UnitreeActuator::init(): Failed to get param '"
-    //                    << param_nh.resolveName("torque_constant") << "'");
-    //   return false;
-    // }
-
     // get torque limit from parameter
-    std::vector<double> torque_limits;
+    std::vector< double > torque_limits;
     if (!param_nh.getParam("torque_limits", torque_limits)) {
       ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("torque_limits") << "' so it has no torque limits");
+                      << param_nh.resolveName("torque_limits") << "' so it has no torque limits");
     }
 
     // get temperature limit from parameter
     int temp_limit = 0;
     if (!param_nh.getParam("temperature_limit", temp_limit)) {
       ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("temperature_limit") << "' so it has no temperature limit");
+                      << param_nh.resolveName("temperature_limit")
+                      << "' so it has no temperature limit");
     }
 
     // get position gain from parameter
     double pos_gain = 0.5;
     if (!param_nh.getParam("pos_gain", pos_gain)) {
       ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("pos_gain") << "' so it has use default value: " << pos_gain);
+                      << param_nh.resolveName("pos_gain")
+                      << "' so it has use default value: " << pos_gain);
     }
 
     // get velocity gain from parameter
     double vel_gain = 0.01;
     if (!param_nh.getParam("vel_gain", vel_gain)) {
       ROS_WARN_STREAM("UnitreeActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("vel_gain") << "' so it has use default value: " << vel_gain);
+                      << param_nh.resolveName("vel_gain")
+                      << "' so it has use default value: " << vel_gain);
     }
 
     // allocate data structure
-    data_.reset(new UnitreeActuatorData(name, serial, id, getMotorType(motor_type), torque_limits, temp_limit, pos_gain, vel_gain));
-
+    data_.reset(new UnitreeActuatorData(name, serial, id, motor_type, torque_limits, temp_limit,
+                                        pos_gain, vel_gain));
 
     // register actuator states & commands to corresponding hardware interfaces
     const hi::ActuatorStateHandle state_handle(data_->name, &data_->pos, &data_->vel, &data_->eff);
@@ -120,10 +126,10 @@ public:
     }
 
     // register actuator temperature state to coressponding hardware interfaces
-    if (!registerActuatorTo < hie::Int32StateInterface > (
-          hw, hie::Int32StateHandle(data_->name + "/temperature", &data_->temperature))) {
-      return false;      
-    }    
+    if (!registerActuatorTo< hie::Int32StateInterface >(
+            hw, hie::Int32StateHandle(data_->name + "/temperature", &data_->temperature))) {
+      return false;
+    }
 
     // make operating mode map from ros-controller name to unitree's operating mode
     std::map< std::string, std::string > mode_name_map;
@@ -152,7 +158,7 @@ public:
         return false;
       }
       mode_map_[controller_names] = mode;
-    }    
+    }
 
     return true;
   }
@@ -252,50 +258,25 @@ private:
     return std::vector< std::string >();
   }
 
-  static MotorType getMotorType(const std::string &motor_type_str) {
-    if (motor_type_str == "GO-M8010-6") {
-      return MotorType::GO_M8010_6;
-    }
-    else if (motor_type_str == "A1") {
-      return MotorType::A1;
-    }
-    else if (motor_type_str == "B1") {
-      return MotorType::B1;
-    }
-    return MotorType();
-  }
-
-  static bool findMotor(const int &id, const std::string &motor_type, SerialPort *const serial) {
-    MotorCmd cmd;
-  
-    if (!(motor_type == "GO-M8010-6" || motor_type == "A1" || motor_type == "B1")) {
-      ROS_ERROR_STREAM("Unabled motor type: usage(GO-M8010-6, A1, A1)");
-      return false;
-    }
-    
-    cmd.motorType = getMotorType(motor_type);
-    cmd.mode = queryMotorMode(cmd.motorType, MotorMode::BRAKE);
-    cmd.id = id;
-    MotorData data;
-    data.motorType = getMotorType(motor_type);
+  static bool findMotor(const int &id, const MotorType motor_type, SerialPort *const serial) {
+    MotorCmd cmd = initializedMotorCmd(motor_type, id, MotorMode::BRAKE);
+    MotorData data = initializedMotorData(motor_type);
     serial->sendRecv(&cmd, &data);
     return data.merror == 0;
   }
 
   OperatingModePtr makeOperatingMode(const std::string &mode_str) const {
     if (mode_str == "position") {
-      return std::make_shared<PositionMode>(data_);
-    }
-    else if (mode_str == "velocity") {
-      return std::make_shared<VelocityMode>(data_);     
-    }
-    else if (mode_str == "torque") {
-      return std::make_shared<TorqueMode>(data_);
+      return std::make_shared< PositionMode >(data_);
+    } else if (mode_str == "velocity") {
+      return std::make_shared< VelocityMode >(data_);
+    } else if (mode_str == "torque") {
+      return std::make_shared< TorqueMode >(data_);
     }
     ROS_ERROR_STREAM("UnitreeActuator::makeOperatingMode(): Unknown operating mode name '"
                      << mode_str << " for the actuator '" << data_->name
                      << "' (id: " << static_cast< int >(data_->id) << ")");
-    return OperatingModePtr();   
+    return OperatingModePtr();
   }
 
 private:
