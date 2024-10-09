@@ -45,6 +45,7 @@ public:
     data_->eff = data.tau;
     data_->vel = data.dq / ratio;
     data_->pos = data.q / ratio;
+    data_->temperature = data.temp;
   }
 
   virtual void stopping() override {
