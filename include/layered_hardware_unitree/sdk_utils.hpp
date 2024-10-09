@@ -14,7 +14,7 @@ static inline MotorType toMotorType(const std::string &str) {
     return MotorType::A1;
   } else if (str == "B1") {
     return MotorType::B1;
-  } else if (str == "GO_M8010_6") {
+  } else if (str == "GO-M8010-6") {
     return MotorType::GO_M8010_6;
   } else {
     throw std::runtime_error("Unknown motor type name \"" + str + "\"");
@@ -28,7 +28,7 @@ static inline std::string toString(const MotorType type) {
   case MotorType::B1:
     return "B1";
   case MotorType::GO_M8010_6:
-    return "GO_M8010_6";
+    return "GO-M8010-6";
   default:
     std::ostringstream msg;
     msg << "Unkown motor type id (" << static_cast< int >(type) << ")";
