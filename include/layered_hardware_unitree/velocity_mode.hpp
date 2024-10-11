@@ -15,7 +15,7 @@ public:
   VelocityMode(const UnitreeActuatorDataPtr &data) : OperatingModeBase("velocity", data) {}
 
   virtual void starting() override {
-    // nothing to do
+    data_->vel_cmd = 0.;
   }
 
   virtual void read(const ros::Time &time, const ros::Duration &period) override {

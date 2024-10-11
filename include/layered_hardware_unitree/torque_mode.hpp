@@ -16,7 +16,7 @@ public:
   TorqueMode(const UnitreeActuatorDataPtr &data) : OperatingModeBase("torque", data) {}
 
   virtual void starting() override {
-    // nothing to do
+    data_->eff_cmd = 0.;
   }
 
   virtual void read(const ros::Time &time, const ros::Duration &period) override {
