@@ -1,5 +1,5 @@
-#ifndef LAYERED_HARDWARE_UNITREE_POSITION_MODE_HPP
-#define LAYERED_HARDWARE_UNITREE_POSITION_MODE_HPP
+#ifndef LAYERED_HARDWARE_UNITREE_BRAKE_MODE_HPP
+#define LAYERED_HARDWARE_UNITREE_BRAKE_MODE_HPP
 
 #include <cmath>
 #include <memory>
@@ -12,17 +12,13 @@
 
 namespace layered_hardware_unitree {
 
-class PositionMode : public OperatingModeInterface {
+class BrakeMode : public OperatingModeInterface {
 public:
-  PositionMode(const std::shared_ptr<UnitreeActuatorData> &data)
-      : OperatingModeInterface("position", data) {}
+  BrakeMode(const std::shared_ptr<UnitreeActuatorData> &data)
+      : OperatingModeInterface("brake", data) {}
 
   virtual void starting() override {
-    // fetch present position and use it as initial value of command
-    MotorCmd cmd = initialized_motor_cmd(data_->motor_type, data_->id, MotorMode::BRAKE);
-    MotorData data = initialized_motor_data(data_->motor_type);
-    data_->serial->sendRecv(&cmd, &data);
-    data_->pos_cmd = data.q / queryGearRatio(data_->motor_type);
+    // nothing to do
   }
 
   virtual void read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
@@ -32,14 +28,8 @@ public:
 
   virtual void write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
     const float ratio = queryGearRatio(data_->motor_type);
-    // pack position command.
-    // if the command is NaN, use present position instead.
-    // if the position is NaN, use 0.0 instead.
-    MotorCmd cmd = initialized_motor_cmd(data_->motor_type, data_->id, MotorMode::FOC);
-    cmd.q = (!std::isnan(data_->pos_cmd) ? data_->pos_cmd
-                                         : (!std::isnan(data_->pos) ? data_->pos : 0.)) *
-            ratio;
-    cmd.kp = (!std::isnan(data_->pos_gain) ? data_->pos_gain : 0.);
+    // pack brake command
+    MotorCmd cmd = initialized_motor_cmd(data_->motor_type, data_->id, MotorMode::BRAKE);
     // pack state data
     MotorData data = initialized_motor_data(data_->motor_type);
     // send & receive (TODO: check the return value)

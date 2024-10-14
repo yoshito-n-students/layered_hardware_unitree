@@ -2,66 +2,51 @@
 #define LAYERED_HARDWARE_UNITREE_TORQUE_MODE_HPP
 
 #include <cmath>
-#include <cstdint>
-#include <limits>
-#include <map>
-#include <string>
+#include <memory>
 
-#include <layered_hardware_unitree/common_namespaces.hpp>
+#include <layered_hardware_unitree/operating_mode_interface.hpp>
 #include <layered_hardware_unitree/unitree_actuator_data.hpp>
-#include <layered_hardware_unitree/operating_mode_base.hpp>
-#include <ros/duration.h>
-#include <ros/time.h>
-
-#include <ros/duration.h>
-#include <ros/time.h>
-
-#include <boost/optional.hpp>
-
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
 
 namespace layered_hardware_unitree {
-class TorqueMode : public OperatingModeBase {
+
+class TorqueMode : public OperatingModeInterface {
 public:
-  TorqueMode(const UnitreeActuatorDataPtr &data) 
-      : OperatingModeBase("torque", data) {}
-    
-  virtual void starting() override {
-    data_->m_cmd.kd = 0.01;
-    data_->m_cmd.dq = 0.;
-    sendRecv();
-    readAllStates();
+  TorqueMode(const std::shared_ptr<UnitreeActuatorData> &data)
+      : OperatingModeInterface("torque", data) {}
 
-    data_->eff_cmd = data_->eff;
-    prev_eff_cmd_ = std::numeric_limits< double >::quiet_NaN();    
+  virtual void starting() override { data_->eff_cmd = 0.; }
+
+  virtual void read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
+    // nothing to do because reading states from the actuator is actually performed in write().
+    // this is because of limitation of unitree_sdk.
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) override {
-    // read pos, vel, eff, temp
-    readAllStates();
+  virtual void write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
+    const float ratio = queryGearRatio(data_->motor_type);
+    // pack torque command.
+    // if the command is NaN, use 0.0 instead.
+    MotorCmd cmd = initialized_motor_cmd(data_->motor_type, data_->id, MotorMode::FOC);
+    cmd.tau = (!std::isnan(data_->eff_cmd) ? data_->eff_cmd : 0.);
+    // pack state data
+    MotorData data = initialized_motor_data(data_->motor_type);
+    // send & receive (TODO: check the return value)
+    data_->serial->sendRecv(&cmd, &data);
+    // update state values according to received data
+    data_->pos = data.q / ratio;
+    data_->vel = data.dq / ratio;
+    data_->eff = data.tau;
+    data_->temperature = data.temp;
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) override {
-    // write goal position if the goal pos or profile torque have been updated
-    // to make the change affect
-    const bool do_write_vel(!std::isnan(data_->eff_cmd) &&
-                            areNotEqual(data_->eff_cmd, prev_eff_cmd_));
-    if (do_write_vel) {
-      if (data_->temp_limit < data_->temperature) {
-        data_->m_cmd.tau = 0.;
-      }
-      else {
-        data_->m_cmd.tau = data_->eff_cmd;
-      }
-      prev_eff_cmd_ = data_->eff_cmd;
-    }
-    sendRecv();
+  virtual void stopping() override {
+    // disable torque by sending zero command
+    MotorCmd cmd = initialized_motor_cmd(data_->motor_type, data_->id, MotorMode::FOC);
+    MotorData data = initialized_motor_data(data_->motor_type);
+    data_->serial->sendRecv(&cmd, &data);
   }
-
-  virtual void stopping() override { torqueOff(); }
-
-private:
-  double prev_eff_cmd_;
 };
-}
+} // namespace layered_hardware_unitree
 
 #endif

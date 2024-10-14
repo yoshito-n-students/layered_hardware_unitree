@@ -1,126 +1,160 @@
 #ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 #define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 
+#include <map>
 #include <memory>
+#include <string>
+#include <utility> // for std::move()
+#include <vector>
 
-#include <layered_hardware/layer_base.hpp>
+#include <controller_interface/controller_interface_base.hpp> // for ci::InterfaceConfiguration
+#include <hardware_interface/handle.hpp>                      // for hi::{State,Command}Interface
+#include <hardware_interface/hardware_info.hpp>
+#include <hardware_interface/loaned_command_interface.hpp>
+#include <hardware_interface/loaned_state_interface.hpp>
+#include <hardware_interface/types/hardware_interface_return_values.hpp>
+#include <layered_hardware/layer_interface.hpp>
+#include <layered_hardware/merge_utils.hpp>
+#include <layered_hardware/string_registry.hpp>
 #include <layered_hardware_unitree/common_namespaces.hpp>
-#include <layered_hardware_unitree/controller_set.hpp>
+#include <layered_hardware_unitree/logging_utils.hpp>
 #include <layered_hardware_unitree/unitree_actuator.hpp>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
 
-#include <ros/console.h>
-#include <ros/duration.h>
-#include <ros/names.h>
-#include <ros/node_handle.h>
-#include <ros/time.h>
-#include <xmlrpcpp/XmlRpcValue.h>
+#include <serialPort/SerialPort.h>
+#include <yaml-cpp/yaml.h>
 
 namespace layered_hardware_unitree {
 
-class UnitreeActuatorLayer : public lh::LayerBase {
+class UnitreeActuatorLayer : public lh::LayerInterface {
 public:
-  virtual bool init(hi::RobotHW *const hw, const ros::NodeHandle &param_nh,
-                    const std::string &urdf_str) override {
-    // make actuator interfaces registered to the hardware
-    // so that other layers can find the interfaces
-    makeRegistered< hi::ActuatorStateInterface >(hw);
-    makeRegistered< hi::PositionActuatorInterface >(hw);
-    makeRegistered< hi::VelocityActuatorInterface >(hw);
-    makeRegistered< hi::EffortActuatorInterface >(hw);
-    makeRegistered< hie::Int32StateInterface >(hw);
+  virtual CallbackReturn on_init(const std::string &layer_name,
+                                 const hi::HardwareInfo &hardware_info) override {
+    // initialize the base class first
+    const CallbackReturn is_base_initialized =
+        lh::LayerInterface::on_init(layer_name, hardware_info);
+    if (is_base_initialized != CallbackReturn::SUCCESS) {
+      return is_base_initialized;
+    }
+
+    // find parameter group for this layer
+    const auto params_it = hardware_info.hardware_parameters.find(layer_name);
+    if (params_it == hardware_info.hardware_parameters.end()) {
+      LHU_ERROR("UnitreeActuatorLayer::on_init(): \"%s\" parameter is missing", layer_name.c_str());
+      return CallbackReturn::ERROR;
+    }
+
+    // parse parameters for this layer as yaml
+    std::string serial_iface;
+    std::map<std::string, YAML::Node> actuator_list;
+    try {
+      const YAML::Node params = YAML::Load(params_it->second);
+      serial_iface = params["serial_interface"].as<std::string>("/dev/ttyUSB0");
+      for (const auto &name_param_pair : params["actuators"]) {
+        actuator_list.emplace(name_param_pair.first.as<std::string>(), name_param_pair.second);
+      }
+    } catch (const YAML::Exception &error) {
+      LHU_ERROR("UnitreeActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
+                error.what(), layer_name.c_str());
+      return CallbackReturn::ERROR;
+    }
 
     // open USB serial device
-    std::string port = param< std::string >(param_nh, "serial_interface", "/dev/ttyUSB0");
+    std::shared_ptr<SerialPort> serial;
     try {
-      serial_ = std::make_shared< SerialPort >(port);
+      serial.reset(new SerialPort(serial_iface));
     } catch (IOException &e) {
-      ROS_ERROR_STREAM("UnitreeActuatorLayer::init(): Failed to open SerialPort: " << e.what());
-      return false;
-    }
-
-    // load actuator names from param "actuators"
-    XmlRpc::XmlRpcValue ators_param;
-    if (!param_nh.getParam("actuators", ators_param)) {
-      ROS_ERROR_STREAM("UnitreeActuatorLayer::init(): Failed to get param '"
-                       << param_nh.resolveName("actuators") << "'");
-      return false;
-    }
-    if (ators_param.getType() != XmlRpc::XmlRpcValue::TypeStruct) {
-      ROS_ERROR_STREAM("UnitreeActuatorLayer::init(): Param '" << param_nh.resolveName("actuators")
-                                                               << "' must be a struct");
-      return false;
+      LHU_ERROR("UnitreeActuatorLayer::on_init(): Failed to open SerialPort: %s", e.what());
+      return CallbackReturn::ERROR;
     }
 
     // init actuators with param "actuators/<actuator_name>"
-    // (could not use BOOST_FOREACH here to avoid a bug in the library in Kinetic)
-    for (const XmlRpc::XmlRpcValue::ValueStruct::value_type &ator_param : ators_param) {
-      UnitreeActuatorPtr ator(new UnitreeActuator());
-      ros::NodeHandle ator_param_nh(param_nh, ros::names::append("actuators", ator_param.first));
-      if (!ator->init(ator_param.first, serial_, hw, ator_param_nh)) {
-        return false;
+    for (const auto &[ator_name, ator_params] : actuator_list) {
+      try {
+        actuators_.emplace_back(new UnitreeActuator(ator_name, ator_params, serial));
+      } catch (const std::runtime_error &error) {
+        return CallbackReturn::ERROR;
       }
-      ROS_INFO_STREAM("UnitreeActuatorLayer::init(): Initialized the actuator '" << ator_param.first
-                                                                                 << "'");
-      actuators_.push_back(ator);
+      LHU_INFO("UnitreeActuatorLayer::init(): Initialized the actuator \"%s\"", ator_name.c_str());
     }
 
-    return true;
+    return CallbackReturn::SUCCESS;
   }
 
-  virtual bool prepareSwitch(const std::list< hi::ControllerInfo > &start_list,
-                             const std::list< hi::ControllerInfo > &stop_list) override {
-    // dry-update of the list of running controllers
-    const ControllerSet updated_list(controllers_.updated(start_list, stop_list));
-
-    // ask to all actuators if controller switching is possible
-    for (const UnitreeActuatorPtr &ator : actuators_) {
-      if (!ator->prepareSwitch(updated_list)) {
-        return false;
-      }
+  virtual std::vector<hi::StateInterface> export_state_interfaces() override {
+    // export reference to actuator states owned by this layer
+    std::vector<hi::StateInterface> ifaces;
+    for (const auto &ator : actuators_) {
+      ifaces = lh::merge(std::move(ifaces), ator->export_state_interfaces());
     }
-
-    return true;
+    return ifaces;
   }
 
-  virtual void doSwitch(const std::list< hi::ControllerInfo > &start_list,
-                        const std::list< hi::ControllerInfo > &stop_list) override {
-    // update the list of running controllers
-    controllers_.update(start_list, stop_list);
+  virtual std::vector<hi::CommandInterface> export_command_interfaces() override {
+    // export reference to actuator commands owned by this layer
+    std::vector<hi::CommandInterface> ifaces;
+    for (const auto &ator : actuators_) {
+      ifaces = lh::merge(std::move(ifaces), ator->export_command_interfaces());
+    }
+    return ifaces;
+  }
 
+  virtual ci::InterfaceConfiguration state_interface_configuration() const override {
+    // any state interfaces required from other layers because this layer is "source"
+    return {ci::interface_configuration_type::NONE, {}};
+  }
+
+  virtual ci::InterfaceConfiguration command_interface_configuration() const override {
+    // any command interfaces required from other layers because this layer is "source"
+    return {ci::interface_configuration_type::NONE, {}};
+  }
+
+  virtual void
+  assign_interfaces(std::vector<hi::LoanedStateInterface> && /*state_interfaces*/,
+                    std::vector<hi::LoanedCommandInterface> && /*command_interfaces*/) override {
+    // any interfaces has to be imported from other layers because this layer is "source"
+  }
+
+  virtual hi::return_type
+  prepare_command_mode_switch(const lh::StringRegistry &active_interfaces) override {
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->prepare_command_mode_switch(active_interfaces));
+    }
+    return result;
+  }
+
+  virtual hi::return_type
+  perform_command_mode_switch(const lh::StringRegistry &active_interfaces) override {
     // notify controller switching to all actuators
-    for (const UnitreeActuatorPtr &ator : actuators_) {
-      ator->doSwitch(controllers_);
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->perform_command_mode_switch(active_interfaces));
     }
+    return result;
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) override {
+  virtual hi::return_type read(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     // read from all actuators
-    for (const UnitreeActuatorPtr &ator : actuators_) {
-      ator->read(time, period);
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->read(time, period));
     }
+    return result;
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) override {
+  virtual hi::return_type write(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     // write to all actuators
-    for (const UnitreeActuatorPtr &ator : actuators_) {
-      ator->write(time, period);
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->write(time, period));
     }
+    return result;
   }
 
 private:
-  // make an hardware interface registered. the interface must be in the static memory space
-  // to allow access from outside of this plugin.
-  template < typename Interface > static void makeRegistered(hi::RobotHW *const hw) {
-    if (!hw->get< Interface >()) {
-      static Interface iface;
-      hw->registerInterface(&iface);
-    }
-  }
-
-private:
-  std::shared_ptr< SerialPort > serial_;
-  ControllerSet controllers_;
-  std::vector< UnitreeActuatorPtr > actuators_;
+  std::vector<std::unique_ptr<UnitreeActuator>> actuators_;
 };
 
 } // namespace layered_hardware_unitree
