@@ -1,0 +1,72 @@
+<robot name="single_unitree_example">
+
+    <link name="unitree" />
+
+    <joint name="unitree_joint" type="continuous">
+        <parent link="unitree" />
+        <child link="none" />
+    </joint>
+
+    <transmission name="unitree_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="unitree_joint">
+            <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="unitree_actuator">
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+
+    <link name="none" />
+
+    <!-- -->
+    <ros2_control name="LayeredHardware" type="system">
+        <hardware>
+            <plugin>layered_hardware/LayeredHardware</plugin>
+            <param name="layers">
+                - name: joint_limits_layer
+                  plugin: layered_hardware/JointLimitsLayer
+                - name: transmission_layer
+                  plugin: layered_hardware/TransmissionLayer
+                - name: unitree_actuator_layer
+                  plugin: layered_hardware_unitree/UnitreeActuatorLayer
+            </param>
+            <param name="unitree_actuator_layer">
+                actuators:
+                    unitree_actuator:
+                        id: 0
+                        motor_type: GO-M8010-6
+                        operating_mode_map:
+                            unitree_joint/position: position
+                            unitree_joint/velocity: velocity
+                            unitree_joint/effort: torque
+            </param>
+        </hardware>
+
+        <joint name="unitree_joint">
+            <command_interface name="position">
+                <param name="min">-10</param>
+                <param name="max">10</param>
+            </command_interface>
+            <command_interface name="velocity">
+            </command_interface>
+            <command_interface name="effort">
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <transmission name="unitree_trans">
+            <plugin>transmission_interface/SimpleTransmission</plugin>
+            <actuator name="unitree_actuator" role="unitree_actuator"/>
+            <joint name="unitree_joint" role="unitree_joint">
+                <mechanical_reduction>1.0</mechanical_reduction>
+                <offset>0.0</offset>
+            </joint>
+        </transmission>
+
+    </ros2_control>
+
+</robot>
