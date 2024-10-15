@@ -15,7 +15,7 @@
 #include <layered_hardware_unitree/operating_mode_interface.hpp>
 #include <layered_hardware_unitree/position_mode.hpp>
 #include <layered_hardware_unitree/torque_mode.hpp>
-#include <layered_hardware_unitree/unitree_actuator_data.hpp>
+#include <layered_hardware_unitree/unitree_actuator_context.hpp>
 #include <layered_hardware_unitree/unitree_sdk_helpers.hpp>
 #include <layered_hardware_unitree/velocity_mode.hpp>
 #include <rclcpp/duration.hpp>
@@ -59,7 +59,7 @@ public:
     }
 
     // allocate data structure
-    data_.reset(new UnitreeActuatorData{name, serial, id, motor_type, pos_gain, vel_gain});
+    context_.reset(new UnitreeActuatorContext{name, serial, id, motor_type, pos_gain, vel_gain});
 
     // make operating mode map from interface name to unitree's operating mode
     for (const auto &mode_name : mapped_mode_names) {
@@ -80,19 +80,19 @@ public:
   std::vector<hi::StateInterface> export_state_interfaces() {
     // export reference to actuator states owned by this actuator
     std::vector<hi::StateInterface> ifaces;
-    ifaces.emplace_back(data_->name, hi::HW_IF_POSITION, &data_->pos);
-    ifaces.emplace_back(data_->name, hi::HW_IF_VELOCITY, &data_->vel);
-    ifaces.emplace_back(data_->name, hi::HW_IF_EFFORT, &data_->eff);
-    ifaces.emplace_back(data_->name, "temperature", &data_->temperature);
+    ifaces.emplace_back(context_->name, hi::HW_IF_POSITION, &context_->pos);
+    ifaces.emplace_back(context_->name, hi::HW_IF_VELOCITY, &context_->vel);
+    ifaces.emplace_back(context_->name, hi::HW_IF_EFFORT, &context_->eff);
+    ifaces.emplace_back(context_->name, "temperature", &context_->temperature);
     return ifaces;
   }
 
   std::vector<hi::CommandInterface> export_command_interfaces() {
     // export reference to actuator commands owned by this actuator
     std::vector<hi::CommandInterface> ifaces;
-    ifaces.emplace_back(data_->name, hi::HW_IF_POSITION, &data_->pos_cmd);
-    ifaces.emplace_back(data_->name, hi::HW_IF_VELOCITY, &data_->vel_cmd);
-    ifaces.emplace_back(data_->name, hi::HW_IF_EFFORT, &data_->eff_cmd);
+    ifaces.emplace_back(context_->name, hi::HW_IF_POSITION, &context_->pos_cmd);
+    ifaces.emplace_back(context_->name, hi::HW_IF_VELOCITY, &context_->vel_cmd);
+    ifaces.emplace_back(context_->name, hi::HW_IF_EFFORT, &context_->eff_cmd);
     return ifaces;
   }
 
@@ -105,7 +105,7 @@ public:
       LHU_ERROR("UnitreeActuator::prepare_command_mode_switch(): "
                 "Reject mode switching of \"%s\" actuator "
                 "because %zd bound interfaces are about to be active",
-                data_->name.c_str(), active_bound_ifaces.size());
+                context_->name.c_str(), active_bound_ifaces.size());
       return hi::return_type::ERROR;
     }
   }
@@ -117,7 +117,7 @@ public:
       LHU_ERROR("UnitreeActuator::perform_command_mode_switch(): "
                 "Could not switch mode of \"%s\" actuator "
                 "because %zd bound interfaces are active",
-                data_->name.c_str(), bound_interfaces_.size());
+                context_->name.c_str(), bound_interfaces_.size());
       return hi::return_type::ERROR;
     }
 
@@ -147,13 +147,13 @@ public:
 private:
   std::shared_ptr<OperatingModeInterface> make_operating_mode(const std::string &mode_str) const {
     if (mode_str == "brake") {
-      return std::make_shared<BrakeMode>(data_);
+      return std::make_shared<BrakeMode>(context_);
     } else if (mode_str == "position") {
-      return std::make_shared<PositionMode>(data_);
+      return std::make_shared<PositionMode>(context_);
     } else if (mode_str == "velocity") {
-      return std::make_shared<VelocityMode>(data_);
+      return std::make_shared<VelocityMode>(context_);
     } else if (mode_str == "torque") {
-      return std::make_shared<TorqueMode>(data_);
+      return std::make_shared<TorqueMode>(context_);
     } else {
       throw std::runtime_error("Unknown operating mode name \"" + mode_str + "\"");
     }
@@ -168,7 +168,7 @@ private:
     if (present_mode_) {
       LHU_INFO("UnitreeActuator::switch_operating_modes(): "
                "Stopping \"%s\" operating mode for \"%s\" actuator",
-               present_mode_->get_name().c_str(), data_->name.c_str());
+               present_mode_->get_name().c_str(), context_->name.c_str());
       present_mode_->stopping();
       present_mode_.reset();
     }
@@ -176,14 +176,14 @@ private:
     if (new_mode) {
       LHU_INFO("UnitreeActuator::switch_operating_modes(): "
                "Starting \"%s\" operating mode for \"%s\" actuator",
-               new_mode->get_name().c_str(), data_->name.c_str());
+               new_mode->get_name().c_str(), context_->name.c_str());
       new_mode->starting();
       present_mode_ = new_mode;
     }
   }
 
 private:
-  std::shared_ptr<UnitreeActuatorData> data_;
+  std::shared_ptr<UnitreeActuatorContext> context_;
 
   // present operating mode
   std::shared_ptr<OperatingModeInterface> present_mode_;

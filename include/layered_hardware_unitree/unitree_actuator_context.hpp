@@ -1,5 +1,5 @@
-#ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_DATA_HPP
-#define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_DATA_HPP
+#ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_CONTEXT_HPP
+#define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_CONTEXT_HPP
 
 #include <limits>
 #include <memory>
@@ -9,7 +9,7 @@
 
 namespace layered_hardware_unitree {
 
-struct UnitreeActuatorData {
+struct UnitreeActuatorContext {
   // handles
   const std::string name;
   std::shared_ptr<SerialPort> serial;

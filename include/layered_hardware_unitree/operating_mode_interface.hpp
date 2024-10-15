@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include <layered_hardware_unitree/unitree_actuator_data.hpp>
+#include <layered_hardware_unitree/unitree_actuator_context.hpp>
 #include <layered_hardware_unitree/unitree_sdk_helpers.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
@@ -13,8 +13,9 @@ namespace layered_hardware_unitree {
 
 class OperatingModeInterface {
 public:
-  OperatingModeInterface(const std::string &name, const std::shared_ptr<UnitreeActuatorData> &data)
-      : name_(name), data_(data) {}
+  OperatingModeInterface(const std::string &name,
+                         const std::shared_ptr<UnitreeActuatorContext> &context)
+      : name_(name), context_(context) {}
 
   virtual ~OperatingModeInterface() {}
 
@@ -31,9 +32,9 @@ public:
 
 protected:
   const std::string name_;
-  const std::shared_ptr<UnitreeActuatorData> data_;
+  const std::shared_ptr<UnitreeActuatorContext> context_;
 };
 
 } // namespace layered_hardware_unitree
 
-#endif // LAYERED_HARDWARE_UNITREE_OPERATING_MODE_BASE_HPP
+#endif
