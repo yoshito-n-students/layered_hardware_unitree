@@ -16,11 +16,16 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/unitree_actuator_sdk/lib)
+add_library(unitree_sdk SHARED IMPORTED)
+set(UNITREE_SDK_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/unitree_actuator_sdk/lib)
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64") 
-    set(EXTRA_LIBS libUnitreeMotorSDK_Arm64.so)
+  set_target_properties(
+    unitree_sdk PROPERTIES
+    IMPORTED_LOCATION ${UNITREE_SDK_LIB_DIR}/libUnitreeMotorSDK_Arm64.so)
 else()
-    set(EXTRA_LIBS libUnitreeMotorSDK_Linux64.so)
+  set_target_properties(
+    unitree_sdk PROPERTIES
+    IMPORTED_LOCATION ${UNITREE_SDK_LIB_DIR}/libUnitreeMotorSDK_Linux64.so)
 endif()
 
 ## Declare a C++ library
@@ -35,7 +40,7 @@ target_include_directories(layered_hardware_unitree_plugins
 )
 target_link_libraries(
   layered_hardware_unitree_plugins
-  ${EXTRA_LIBS}
+  unitree_sdk
 )
 ament_target_dependencies(
   layered_hardware_unitree_plugins
@@ -56,8 +61,11 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 install(
-    DIRECTORY config launch urdf
-    DESTINATION share/layered_hardware_unitree)
+  IMPORTED_RUNTIME_ARTIFACTS unitree_sdk
+  DESTINATION lib)
+install(
+  DIRECTORY config launch urdf
+  DESTINATION share/layered_hardware_unitree)
 
 # TODO: declare tests here
 
