@@ -15,11 +15,11 @@
             <plugin>layered_hardware/LayeredHardware</plugin>
             <param name="layers">
                 - name: joint_limits_layer
-                  plugin: layered_hardware/JointLimitsLayer
+                  type: layered_hardware/JointLimitsLayer
                 - name: transmission_layer
-                  plugin: layered_hardware/TransmissionLayer
+                  type: layered_hardware/TransmissionLayer
                 - name: unitree_actuator_layer
-                  plugin: layered_hardware_unitree/UnitreeActuatorLayer
+                  type: layered_hardware_unitree/UnitreeActuatorLayer
             </param>
             <param name="unitree_actuator_layer">
                 actuators:
