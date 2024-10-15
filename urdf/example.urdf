@@ -7,19 +7,6 @@
         <child link="none" />
     </joint>
 
-    <transmission name="unitree_trans">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="unitree_joint">
-            <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface_extensions/PosVelEffJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="unitree_actuator">
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-
     <link name="none" />
 
     <!-- -->
