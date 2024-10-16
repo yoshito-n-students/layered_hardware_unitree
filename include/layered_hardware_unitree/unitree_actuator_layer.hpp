@@ -1,7 +1,6 @@
 #ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 #define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 
-#include <map>
 #include <memory>
 #include <string>
 #include <utility> // for std::move()
@@ -47,12 +46,14 @@ public:
 
     // parse parameters for this layer as yaml
     std::string serial_iface;
-    std::map<std::string, YAML::Node> actuator_list;
+    std::vector<std::string> ator_names;
+    std::vector<YAML::Node> ator_params;
     try {
       const YAML::Node params = YAML::Load(params_it->second);
       serial_iface = params["serial_interface"].as<std::string>("/dev/ttyUSB0");
       for (const auto &name_param_pair : params["actuators"]) {
-        actuator_list.emplace(name_param_pair.first.as<std::string>(), name_param_pair.second);
+        ator_names.emplace_back(name_param_pair.first.as<std::string>());
+        ator_params.emplace_back(name_param_pair.second);
       }
     } catch (const YAML::Exception &error) {
       LHU_ERROR("UnitreeActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
@@ -70,13 +71,14 @@ public:
     }
 
     // init actuators with param "actuators/<actuator_name>"
-    for (const auto &[ator_name, ator_params] : actuator_list) {
+    for (std::size_t i = 0; i < ator_names.size(); ++i) {
       try {
-        actuators_.emplace_back(new UnitreeActuator(ator_name, ator_params, serial));
+        actuators_.emplace_back(new UnitreeActuator(ator_names[i], ator_params[i], serial));
       } catch (const std::runtime_error &error) {
         return CallbackReturn::ERROR;
       }
-      LHU_INFO("UnitreeActuatorLayer::init(): Initialized the actuator \"%s\"", ator_name.c_str());
+      LHU_INFO("UnitreeActuatorLayer::init(): Initialized the actuator \"%s\"",
+               ator_names[i].c_str());
     }
 
     return CallbackReturn::SUCCESS;
