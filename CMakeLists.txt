@@ -64,7 +64,7 @@ install(
   IMPORTED_RUNTIME_ARTIFACTS unitree_sdk
   DESTINATION lib)
 install(
-  DIRECTORY config launch urdf
+  DIRECTORY examples
   DESTINATION share/layered_hardware_unitree)
 
 # TODO: declare tests here
