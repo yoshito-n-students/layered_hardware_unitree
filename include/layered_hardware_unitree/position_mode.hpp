@@ -2,66 +2,60 @@
 #define LAYERED_HARDWARE_UNITREE_POSITION_MODE_HPP
 
 #include <cmath>
-#include <cstdint>
-#include <limits>
-#include <map>
-#include <string>
 
-#include <layered_hardware_unitree/common_namespaces.hpp>
-#include <layered_hardware_unitree/unitree_actuator_data.hpp>
 #include <layered_hardware_unitree/operating_mode_base.hpp>
+#include <layered_hardware_unitree/sdk_utils.hpp>
+#include <layered_hardware_unitree/unitree_actuator_data.hpp>
 #include <ros/duration.h>
 #include <ros/time.h>
-
-#include <ros/duration.h>
-#include <ros/time.h>
-
-#include <boost/optional.hpp>
-
 
 namespace layered_hardware_unitree {
+
 class PositionMode : public OperatingModeBase {
 public:
-  PositionMode(const UnitreeActuatorDataPtr &data) 
-      : OperatingModeBase("position", data) {}
-    
-  virtual void starting() override {
-    data_->m_cmd.kp = 0.01;
-    data_->m_cmd.q = 0.;
-    sendRecv();
-    readAllStates();
+  PositionMode(const UnitreeActuatorDataPtr &data) : OperatingModeBase("position", data) {}
 
-    data_->pos_cmd = data_->pos;
-    prev_pos_cmd_ = std::numeric_limits< double >::quiet_NaN();    
+  virtual void starting() override {
+    // fetch motor position & use it as initial position command value
+    MotorCmd cmd = initializedMotorCmd(data_->motor_type, data_->id, MotorMode::BRAKE);
+    MotorData data = initializedMotorData(data_->motor_type);
+    data_->serial->sendRecv(&cmd, &data);
+    data_->pos_cmd = data.q / queryGearRatio(data_->motor_type);
   }
 
   virtual void read(const ros::Time &time, const ros::Duration &period) override {
-    // read pos, vel, eff, temp
-    readAllStates();
+    // nothing to do as state variables will be updated in write()
   }
 
   virtual void write(const ros::Time &time, const ros::Duration &period) override {
-    // write goal position if the goal pos or profile velocity have been updated
-    // to make the change affect
-    const bool do_write_pos(!std::isnan(data_->pos_cmd) &&
-                            areNotEqual(data_->pos_cmd, prev_pos_cmd_));
-    if (do_write_pos) {
-      if (data_->temp_limit < data_->temperature) {
-        data_->m_cmd.q = data_->pos;
-      }
-      else {
-        data_->m_cmd.q = data_->pos_cmd;
-      }
-      prev_pos_cmd_ = data_->pos_cmd;
-    }
-    sendRecv();
+    const float ratio = queryGearRatio(data_->motor_type);
+    // build motor command
+    // (if command is NaN, use present position instead. if present position is NaN, use 0)
+    MotorCmd cmd = initializedMotorCmd(data_->motor_type, data_->id, MotorMode::FOC);
+    cmd.kp = data_->pos_gain;
+    cmd.q = (!std::isnan(data_->pos_cmd) ? data_->pos_cmd
+                                         : (!std::isnan(data_->pos) ? data_->pos : 0.)) *
+            ratio;
+    // build motor state data
+    MotorData data = initializedMotorData(data_->motor_type);
+    // send command & receive state
+    data_->serial->sendRecv(&cmd, &data);
+    // TODO: check data.merror here
+    // update state variables
+    data_->eff = data.tau;
+    data_->vel = data.dq / ratio;
+    data_->pos = data.q / ratio;
+    data_->temperature = data.temp;
   }
 
-  virtual void stopping() override { torqueOff(); }
-
-private:
-  double prev_pos_cmd_;
+  virtual void stopping() override {
+    // disable torque by sending zero command
+    MotorCmd cmd = initializedMotorCmd(data_->motor_type, data_->id, MotorMode::FOC);
+    MotorData data = initializedMotorData(data_->motor_type);
+    data_->serial->sendRecv(&cmd, &data);
+  }
 };
-}
+
+} // namespace layered_hardware_unitree
 
 #endif
