@@ -8,7 +8,7 @@
 namespace layered_hardware_unitree {
 
 struct UnitreeActuatorData {
-  UnitreeActuatorData(const std::string &_name, SerialPort *const _serial, const std::uint8_t _id,
+  UnitreeActuatorData(const std::string &_name, std::shared_ptr<SerialPort> _serial, const std::uint8_t _id,
                       const MotorType &_motor_type, const std::vector< double > &_torque_limits,
                       const int &_temp_limit, const double &_pos_gain, const double &_vel_gain)
       : name(_name), serial(_serial), id(_id), torque_limits(_torque_limits),
@@ -17,7 +17,7 @@ struct UnitreeActuatorData {
 
   // handles
   const std::string name;
-  SerialPort *const serial;
+  std::shared_ptr<SerialPort> serial;
   const std::uint8_t id;
 
   // params

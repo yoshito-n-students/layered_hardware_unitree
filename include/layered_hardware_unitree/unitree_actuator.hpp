@@ -2,6 +2,7 @@
 #define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_HPP
 
 #include <map>
+#include <memory>
 
 #include <hardware_interface/actuator_command_interface.h>
 #include <hardware_interface/actuator_state_interface.h>
@@ -43,8 +44,8 @@ public:
     }
   }
 
-  bool init(const std::string &name, SerialPort *const serial, hi::RobotHW *const hw,
-            const ros::NodeHandle &param_nh) {
+  bool init(const std::string &name, const std::shared_ptr< SerialPort > &serial,
+            hi::RobotHW *const hw, const ros::NodeHandle &param_nh) {
 
     // unitree id from param
     int id;
@@ -111,8 +112,8 @@ public:
     }
 
     // allocate data structure
-    data_.reset(new UnitreeActuatorData(name, serial, id, motor_type, torque_limits, temp_limit,
-                                        pos_gain, vel_gain));
+    data_.reset(new UnitreeActuatorData(name, serial, id, motor_type, torque_limits,
+                                        temp_limit, pos_gain, vel_gain));
 
     // register actuator states & commands to corresponding hardware interfaces
     const hi::ActuatorStateHandle state_handle(data_->name, &data_->pos, &data_->vel, &data_->eff);
@@ -259,7 +260,18 @@ private:
     return std::vector< std::string >();
   }
 
-  static bool findMotor(const int &id, const MotorType motor_type, SerialPort *const serial) {
+  static MotorType getMotorType(const std::string &motor_type_str) {
+    if (motor_type_str == "GO-M8010-6") {
+      return MotorType::GO_M8010_6;
+    } else if (motor_type_str == "A1") {
+      return MotorType::A1;
+    } else if (motor_type_str == "B1") {
+      return MotorType::B1;
+    }
+    return MotorType();
+  }
+
+  static bool findMotor(const int &id, const MotorType motor_type, std::shared_ptr<SerialPort> serial) {
     MotorCmd cmd = initializedMotorCmd(motor_type, id, MotorMode::BRAKE);
     MotorData data = initializedMotorData(motor_type);
     serial->sendRecv(&cmd, &data);
@@ -269,11 +281,11 @@ private:
   OperatingModePtr makeOperatingMode(const std::string &mode_str) const {
     if (mode_str == "position") {
       return std::make_shared< PositionMode >(data_);
-    } else if (mode_str == "safe_velocity") {
+    } else if (mode_str == "velocity") {
       return std::make_shared< VelocityMode >(data_);
     } else if (mode_str == "torque") {
       return std::make_shared< TorqueMode >(data_);
-    } else if (mode_str == "velocity") {
+    } else if (mode_str == "safe_velocity") {
       return std::make_shared< SafeVelocityMode >(data_);
     }
     ROS_ERROR_STREAM("UnitreeActuator::makeOperatingMode(): Unknown operating mode name '"
