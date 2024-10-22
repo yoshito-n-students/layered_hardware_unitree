@@ -7,10 +7,13 @@ namespace hardware_interface {}
 
 namespace layered_hardware {}
 
+namespace unitree_actuator_sdk_ros {}
+
 namespace layered_hardware_unitree {
 namespace ci = controller_interface;
 namespace hi = hardware_interface;
 namespace lh = layered_hardware;
+namespace uasr = unitree_actuator_sdk_ros;
 } // namespace layered_hardware_unitree
 
 #endif

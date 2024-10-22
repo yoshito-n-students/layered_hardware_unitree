@@ -5,7 +5,6 @@
 #include <string>
 
 #include <layered_hardware_unitree/unitree_actuator_context.hpp>
-#include <layered_hardware_unitree/unitree_sdk_helpers.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
 

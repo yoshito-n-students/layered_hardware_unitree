@@ -4,19 +4,18 @@
 #include <limits>
 #include <memory>
 
-#include <serialPort/SerialPort.h>
-#include <unitreeMotor/unitreeMotor.h>
+#include <unitree_actuator_sdk_ros/unitree_actuator_sdk_ros.hpp>
 
 namespace layered_hardware_unitree {
 
 struct UnitreeActuatorContext {
   // handles
   const std::string name;
-  std::shared_ptr<SerialPort> serial;
+  std::shared_ptr<uasr::SerialPort> serial;
   const unsigned char id;
 
   // params
-  const MotorType motor_type;
+  const uasr::MotorType motor_type;
   const double pos_gain, vel_gain;
 
   // states

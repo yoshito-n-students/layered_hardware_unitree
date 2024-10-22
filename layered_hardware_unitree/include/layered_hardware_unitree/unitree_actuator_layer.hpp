@@ -2,6 +2,7 @@
 #define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_LAYER_HPP
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility> // for std::move()
 #include <vector>
@@ -21,7 +22,6 @@
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
 
-#include <serialPort/SerialPort.h>
 #include <yaml-cpp/yaml.h>
 
 namespace layered_hardware_unitree {
@@ -62,11 +62,11 @@ public:
     }
 
     // open USB serial device
-    std::shared_ptr<SerialPort> serial;
+    std::shared_ptr<uasr::SerialPort> serial;
     try {
-      serial.reset(new SerialPort(serial_iface));
-    } catch (IOException &e) {
-      LHU_ERROR("UnitreeActuatorLayer::on_init(): Failed to open SerialPort: %s", e.what());
+      serial.reset(new uasr::SerialPort(serial_iface));
+    } catch (const std::runtime_error &error) {
+      LHU_ERROR("UnitreeActuatorLayer::on_init(): Failed to open SerialPort: %s", error.what());
       return CallbackReturn::ERROR;
     }
 

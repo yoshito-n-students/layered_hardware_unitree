@@ -16,12 +16,11 @@
 #include <layered_hardware_unitree/position_mode.hpp>
 #include <layered_hardware_unitree/torque_mode.hpp>
 #include <layered_hardware_unitree/unitree_actuator_context.hpp>
-#include <layered_hardware_unitree/unitree_sdk_helpers.hpp>
 #include <layered_hardware_unitree/velocity_mode.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
+#include <unitree_actuator_sdk_ros/unitree_actuator_sdk_ros.hpp>
 
-#include <serialPort/SerialPort.h>
 #include <yaml-cpp/yaml.h>
 
 namespace layered_hardware_unitree {
@@ -29,7 +28,7 @@ namespace layered_hardware_unitree {
 class UnitreeActuator {
 public:
   UnitreeActuator(const std::string &name, const YAML::Node &params,
-                  const std::shared_ptr<SerialPort> &serial) {
+                  const std::shared_ptr<uasr::SerialPort> &serial) {
     // parse parameters for this actuator
     unsigned char id;
     std::string motor_type_str;
@@ -50,9 +49,9 @@ public:
     }
 
     // validate motor type
-    MotorType motor_type;
+    uasr::MotorType motor_type;
     try {
-      motor_type = to_motor_type(motor_type_str);
+      motor_type = uasr::to_motor_type(motor_type_str);
     } catch (const std::runtime_error &error) {
       throw std::runtime_error("Invalid value of \"motor_type\" parameter for \"" + name +
                                "\" actuator: " + error.what());

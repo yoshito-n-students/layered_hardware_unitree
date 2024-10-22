@@ -8,6 +8,7 @@
 #include <layered_hardware_unitree/unitree_actuator_context.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
+#include <unitree_actuator_sdk_ros/unitree_actuator_sdk_ros.hpp>
 
 namespace layered_hardware_unitree {
 
@@ -24,29 +25,28 @@ public:
   }
 
   virtual void write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
-    const float ratio = queryGearRatio(context_->motor_type);
     // pack velocity command.
     // if the command is NaN, use present velocity instead.
     // if the velocity is NaN, use 0.0 instead.
-    MotorCmd cmd = initialized_motor_cmd(context_->motor_type, context_->id, MotorMode::FOC);
-    cmd.dq = (!std::isnan(context_->vel_cmd) ? context_->vel_cmd : 0.) * ratio;
+    uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::FOC};
+    cmd.dq = (!std::isnan(context_->vel_cmd) ? context_->vel_cmd : 0.);
     cmd.kd = (!std::isnan(context_->vel_gain) ? context_->vel_gain : 0.);
     // pack state data
-    MotorData data = initialized_motor_data(context_->motor_type);
+    uasr::MotorData data{context_->motor_type, context_->id};
     // send & receive (TODO: check the return value)
-    context_->serial->sendRecv(&cmd, &data);
+    context_->serial->send_recv(cmd, &data);
     // update state values according to received data
-    context_->pos = data.q / ratio;
-    context_->vel = data.dq / ratio;
+    context_->pos = data.q;
+    context_->vel = data.dq;
     context_->eff = data.tau;
     context_->temperature = data.temp;
   }
 
   virtual void stopping() override {
     // disable torque by sending zero command
-    MotorCmd cmd = initialized_motor_cmd(context_->motor_type, context_->id, MotorMode::FOC);
-    MotorData data = initialized_motor_data(context_->motor_type);
-    context_->serial->sendRecv(&cmd, &data);
+    uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::FOC};
+    uasr::MotorData data{context_->motor_type, context_->id};
+    context_->serial->send_recv(cmd, &data);
   }
 };
 
