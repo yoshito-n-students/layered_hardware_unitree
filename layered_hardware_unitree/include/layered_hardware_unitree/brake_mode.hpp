@@ -28,7 +28,7 @@ public:
 
   virtual void write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
     // pack brake command
-    uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::BRAKE};
+    const uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::BRAKE};
     // pack state data
     uasr::MotorData data{context_->motor_type, context_->id};
     // send & receive (TODO: check the return value)
@@ -42,7 +42,7 @@ public:
 
   virtual void stopping() override {
     // disable torque by sending zero command
-    uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::FOC};
+    const uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::FOC};
     uasr::MotorData data{context_->motor_type, context_->id};
     context_->serial->send_recv(cmd, &data);
   }

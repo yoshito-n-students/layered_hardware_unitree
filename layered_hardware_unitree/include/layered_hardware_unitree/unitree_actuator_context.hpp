@@ -11,7 +11,7 @@ namespace layered_hardware_unitree {
 struct UnitreeActuatorContext {
   // handles
   const std::string name;
-  std::shared_ptr<uasr::SerialPort> serial;
+  const std::shared_ptr<uasr::SerialPort> serial;
   const unsigned char id;
 
   // params

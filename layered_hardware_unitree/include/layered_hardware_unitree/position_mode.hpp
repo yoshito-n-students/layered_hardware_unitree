@@ -19,7 +19,7 @@ public:
 
   virtual void starting() override {
     // fetch present position and use it as initial value of command
-    uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::BRAKE};
+    const uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::BRAKE};
     uasr::MotorData data{context_->motor_type, context_->id};
     context_->serial->send_recv(cmd, &data);
     context_->pos_cmd = data.q;
@@ -51,7 +51,7 @@ public:
 
   virtual void stopping() override {
     // disable torque by sending zero command
-    uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::FOC};
+    const uasr::MotorCmd cmd{context_->motor_type, context_->id, uasr::MotorMode::FOC};
     uasr::MotorData data{context_->motor_type, context_->id};
     context_->serial->send_recv(cmd, &data);
   }
