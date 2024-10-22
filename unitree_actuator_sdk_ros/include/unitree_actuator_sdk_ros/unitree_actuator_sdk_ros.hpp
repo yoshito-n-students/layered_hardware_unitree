@@ -60,7 +60,8 @@ public:
   bool send_recv(const MotorCmd &cmd, MotorData *const data);
 
 private:
-  std::unique_ptr<void, std::function<void(void *)>> orig_;
+  using ErasedTypePtr = std::unique_ptr<void, std::function<void(void *)>>;
+  ErasedTypePtr orig_;
 };
 
 } // namespace unitree_actuator_sdk_ros

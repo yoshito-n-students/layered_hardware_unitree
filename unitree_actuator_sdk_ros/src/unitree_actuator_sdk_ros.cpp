@@ -97,9 +97,16 @@ static MotorMode to_motor_mode(const ::MotorMode orig_mode) {
 // =============
 // Serial port
 
-SerialPort::SerialPort(const std::string &port)
-    : orig_(new ::SerialPort(port),
-            [](void *const ptr) { delete static_cast<::SerialPort *>(ptr); }) {}
+SerialPort::SerialPort(const std::string &port) {
+  // open serial port using original sdk
+  try {
+    orig_ = ErasedTypePtr(new ::SerialPort(port),
+                          [](void *const ptr) { delete static_cast<::SerialPort *>(ptr); });
+  } catch (const ::IOException &error) {
+    // convert original exception to standard one
+    throw std::runtime_error(error.what());
+  }
+}
 
 bool SerialPort::send_recv(const MotorCmd &cmd, MotorData *const data) {
   // get motor type & mode ids for original sdk
