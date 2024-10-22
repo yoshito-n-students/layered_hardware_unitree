@@ -51,7 +51,9 @@ static ::MotorType to_original_motor_type(const MotorType type) {
   case MotorType::GO_M8010_6:
     return ::MotorType::GO_M8010_6;
   default:
-    throw std::runtime_error("");
+    std::ostringstream msg;
+    msg << "Unknown motor type id (" << static_cast<int>(type) << ")";
+    throw std::runtime_error(msg.str());
   }
 }
 
@@ -64,7 +66,9 @@ static MotorType to_motor_type(const ::MotorType orig_type) {
   case ::MotorType::GO_M8010_6:
     return MotorType::GO_M8010_6;
   default:
-    throw std::runtime_error("");
+    std::ostringstream msg;
+    msg << "Unknown original motor type id (" << static_cast<int>(orig_type) << ")";
+    throw std::runtime_error(msg.str());
   }
 }
 
@@ -77,7 +81,9 @@ static ::MotorMode to_original_motor_mode(const MotorMode mode) {
   case MotorMode::CALIBRATE:
     return ::MotorMode::CALIBRATE;
   default:
-    throw std::runtime_error("");
+    std::ostringstream msg;
+    msg << "Unknown motor mode id (" << static_cast<int>(mode) << ")";
+    throw std::runtime_error(msg.str());
   }
 }
 
@@ -90,7 +96,9 @@ static MotorMode to_motor_mode(const ::MotorMode orig_mode) {
   case ::MotorMode::CALIBRATE:
     return MotorMode::CALIBRATE;
   default:
-    throw std::runtime_error("");
+    std::ostringstream msg;
+    msg << "Unknown original motor mode id (" << static_cast<int>(orig_mode) << ")";
+    throw std::runtime_error(msg.str());
   }
 }
 
