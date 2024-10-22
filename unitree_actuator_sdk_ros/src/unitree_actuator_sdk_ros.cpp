@@ -12,7 +12,7 @@ namespace unitree_actuator_sdk_ros {
 // =============
 // Motor models
 
-MotorType to_motor_type(const std::string &str) {
+static MotorType to_motor_type(const std::string &str) {
   if (str == "A1") {
     return MotorType::A1;
   } else if (str == "B1") {
@@ -24,7 +24,7 @@ MotorType to_motor_type(const std::string &str) {
   }
 }
 
-std::string to_string(const MotorType type) {
+static std::string to_string(const MotorType type) {
   switch (type) {
   case MotorType::A1:
     return "A1";
@@ -42,7 +42,7 @@ std::string to_string(const MotorType type) {
 // =======================
 // from / to original sdk
 
-::MotorType to_original_motor_type(const MotorType type) {
+static ::MotorType to_original_motor_type(const MotorType type) {
   switch (type) {
   case MotorType::A1:
     return ::MotorType::A1;
@@ -55,7 +55,7 @@ std::string to_string(const MotorType type) {
   }
 }
 
-MotorType to_motor_type(const ::MotorType orig_type) {
+static MotorType to_motor_type(const ::MotorType orig_type) {
   switch (orig_type) {
   case ::MotorType::A1:
     return MotorType::A1;
@@ -68,7 +68,7 @@ MotorType to_motor_type(const ::MotorType orig_type) {
   }
 }
 
-::MotorMode to_original_motor_mode(const MotorMode mode) {
+static ::MotorMode to_original_motor_mode(const MotorMode mode) {
   switch (mode) {
   case MotorMode::BRAKE:
     return ::MotorMode::BRAKE;
@@ -81,7 +81,7 @@ MotorType to_motor_type(const ::MotorType orig_type) {
   }
 }
 
-MotorMode to_motor_mode(const ::MotorMode orig_mode) {
+static MotorMode to_motor_mode(const ::MotorMode orig_mode) {
   switch (orig_mode) {
   case ::MotorMode::BRAKE:
     return MotorMode::BRAKE;

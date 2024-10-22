@@ -12,9 +12,9 @@ namespace unitree_actuator_sdk_ros {
 
 enum class MotorType { A1, B1, GO_M8010_6 };
 
-MotorType to_motor_type(const std::string &str);
+static MotorType to_motor_type(const std::string &str);
 
-std::string to_string(const MotorType type);
+static std::string to_string(const MotorType type);
 
 // ========================
 // Motor's operation modes
