@@ -15,10 +15,13 @@
                   type: layered_hardware_unitree/UnitreeActuatorLayer
             </param>
             <param name="unitree_actuator_layer">
+                serial_interface: /dev/ttyUSB0
                 actuators:
                     axis_unitree:
                         id: 0
                         motor_type: GO-M8010-6
+                        pos_gain: 0.1
+                        vel_gain: 0.05
                         operating_mode_map:
                             axis/position: position
                             axis/velocity: velocity
