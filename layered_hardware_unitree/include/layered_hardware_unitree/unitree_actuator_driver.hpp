@@ -1,5 +1,5 @@
-#ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_HPP
-#define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_HPP
+#ifndef LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_DRIVER_HPP
+#define LAYERED_HARDWARE_UNITREE_UNITREE_ACTUATOR_DRIVER_HPP
 
 #include <memory>
 #include <stdexcept>
@@ -25,10 +25,10 @@
 
 namespace layered_hardware_unitree {
 
-class UnitreeActuator {
+class UnitreeActuatorDriver {
 public:
-  UnitreeActuator(const std::string &name, const YAML::Node &params,
-                  const std::shared_ptr<uasr::SerialPort> &serial) {
+  UnitreeActuatorDriver(const std::string &name, const YAML::Node &params,
+                        const std::shared_ptr<uasr::SerialPort> &serial) {
     // parse parameters for this actuator
     unsigned char id;
     std::string motor_type_str;
@@ -71,7 +71,7 @@ public:
     }
   }
 
-  virtual ~UnitreeActuator() {
+  virtual ~UnitreeActuatorDriver() {
     // finalize the present mode
     switch_operating_modes(/* new_mode = */ nullptr);
   }
@@ -101,7 +101,7 @@ public:
     if (active_bound_ifaces.size() <= 1) {
       return hi::return_type::OK;
     } else { // active_bound_ifaces.size() >= 2
-      LHU_ERROR("UnitreeActuator::prepare_command_mode_switch(): "
+      LHU_ERROR("UnitreeActuatorDriver::prepare_command_mode_switch(): "
                 "Reject mode switching of \"%s\" actuator "
                 "because %zd bound interfaces are about to be active",
                 context_->name.c_str(), active_bound_ifaces.size());
@@ -113,7 +113,7 @@ public:
     // check how many interfaces associated with actuator command mode are active
     const std::vector<std::size_t> active_bound_ifaces = active_interfaces.find(bound_interfaces_);
     if (active_bound_ifaces.size() >= 2) {
-      LHU_ERROR("UnitreeActuator::perform_command_mode_switch(): "
+      LHU_ERROR("UnitreeActuatorDriver::perform_command_mode_switch(): "
                 "Could not switch mode of \"%s\" actuator "
                 "because %zd bound interfaces are active",
                 context_->name.c_str(), bound_interfaces_.size());
@@ -165,7 +165,7 @@ private:
     }
     // stop present mode
     if (present_mode_) {
-      LHU_INFO("UnitreeActuator::switch_operating_modes(): "
+      LHU_INFO("UnitreeActuatorDriver::switch_operating_modes(): "
                "Stopping \"%s\" operating mode for \"%s\" actuator",
                present_mode_->get_name().c_str(), context_->name.c_str());
       present_mode_->stopping();
@@ -173,7 +173,7 @@ private:
     }
     // start new mode
     if (new_mode) {
-      LHU_INFO("UnitreeActuator::switch_operating_modes(): "
+      LHU_INFO("UnitreeActuatorDriver::switch_operating_modes(): "
                "Starting \"%s\" operating mode for \"%s\" actuator",
                new_mode->get_name().c_str(), context_->name.c_str());
       new_mode->starting();

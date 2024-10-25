@@ -18,7 +18,7 @@
 #include <layered_hardware/string_registry.hpp>
 #include <layered_hardware_unitree/common_namespaces.hpp>
 #include <layered_hardware_unitree/logging_utils.hpp>
-#include <layered_hardware_unitree/unitree_actuator.hpp>
+#include <layered_hardware_unitree/unitree_actuator_driver.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/time.hpp>
 
@@ -73,7 +73,7 @@ public:
     // init actuators with param "actuators/<actuator_name>"
     for (std::size_t i = 0; i < ator_names.size(); ++i) {
       try {
-        actuators_.emplace_back(new UnitreeActuator(ator_names[i], ator_params[i], serial));
+        drivers_.emplace_back(new UnitreeActuatorDriver(ator_names[i], ator_params[i], serial));
       } catch (const std::runtime_error &error) {
         return CallbackReturn::ERROR;
       }
@@ -87,8 +87,8 @@ public:
   virtual std::vector<hi::StateInterface> export_state_interfaces() override {
     // export reference to actuator states owned by this layer
     std::vector<hi::StateInterface> ifaces;
-    for (const auto &ator : actuators_) {
-      ifaces = lh::merge(std::move(ifaces), ator->export_state_interfaces());
+    for (const auto &driver : drivers_) {
+      ifaces = lh::merge(std::move(ifaces), driver->export_state_interfaces());
     }
     return ifaces;
   }
@@ -96,8 +96,8 @@ public:
   virtual std::vector<hi::CommandInterface> export_command_interfaces() override {
     // export reference to actuator commands owned by this layer
     std::vector<hi::CommandInterface> ifaces;
-    for (const auto &ator : actuators_) {
-      ifaces = lh::merge(std::move(ifaces), ator->export_command_interfaces());
+    for (const auto &driver : drivers_) {
+      ifaces = lh::merge(std::move(ifaces), driver->export_command_interfaces());
     }
     return ifaces;
   }
@@ -121,8 +121,8 @@ public:
   virtual hi::return_type
   prepare_command_mode_switch(const lh::StringRegistry &active_interfaces) override {
     hi::return_type result = hi::return_type::OK;
-    for (const auto &ator : actuators_) {
-      result = lh::merge(result, ator->prepare_command_mode_switch(active_interfaces));
+    for (const auto &driver : drivers_) {
+      result = lh::merge(result, driver->prepare_command_mode_switch(active_interfaces));
     }
     return result;
   }
@@ -131,8 +131,8 @@ public:
   perform_command_mode_switch(const lh::StringRegistry &active_interfaces) override {
     // notify controller switching to all actuators
     hi::return_type result = hi::return_type::OK;
-    for (const auto &ator : actuators_) {
-      result = lh::merge(result, ator->perform_command_mode_switch(active_interfaces));
+    for (const auto &driver : drivers_) {
+      result = lh::merge(result, driver->perform_command_mode_switch(active_interfaces));
     }
     return result;
   }
@@ -140,8 +140,8 @@ public:
   virtual hi::return_type read(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     // read from all actuators
     hi::return_type result = hi::return_type::OK;
-    for (const auto &ator : actuators_) {
-      result = lh::merge(result, ator->read(time, period));
+    for (const auto &driver : drivers_) {
+      result = lh::merge(result, driver->read(time, period));
     }
     return result;
   }
@@ -149,14 +149,14 @@ public:
   virtual hi::return_type write(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     // write to all actuators
     hi::return_type result = hi::return_type::OK;
-    for (const auto &ator : actuators_) {
-      result = lh::merge(result, ator->write(time, period));
+    for (const auto &driver : drivers_) {
+      result = lh::merge(result, driver->write(time, period));
     }
     return result;
   }
 
 private:
-  std::vector<std::unique_ptr<UnitreeActuator>> actuators_;
+  std::vector<std::unique_ptr<UnitreeActuatorDriver>> drivers_;
 };
 
 } // namespace layered_hardware_unitree
