@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <memory>
+#include <sstream>
 
 #include <unitree_actuator_sdk_ros/unitree_actuator_sdk_ros.hpp>
 
@@ -29,6 +30,15 @@ struct UnitreeActuatorContext {
          vel_cmd = std::numeric_limits<double>::quiet_NaN(),
          eff_cmd = std::numeric_limits<double>::quiet_NaN();
 };
+
+// utility functions
+
+static inline std::string get_display_name(const UnitreeActuatorContext &context) {
+  std::ostringstream disp_name;
+  disp_name << "\"" << context.name << "\" actuator (id: " << static_cast<unsigned int>(context.id)
+            << ")";
+  return disp_name.str();
+}
 
 } // namespace layered_hardware_unitree
 
