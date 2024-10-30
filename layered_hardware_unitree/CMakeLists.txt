@@ -7,7 +7,7 @@ endif()
 
 # include_directories(include)
 
-# find dependencies
+## Find ROS dependencies
 find_package(ament_cmake REQUIRED)
 find_package(controller_interface REQUIRED)
 find_package(hardware_interface REQUIRED)
@@ -15,7 +15,9 @@ find_package(layered_hardware REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(unitree_actuator_sdk_ros REQUIRED)
-find_package(yaml_cpp_vendor REQUIRED)
+
+## Find system dependencies
+find_package(yaml-cpp REQUIRED)
 
 ## Declare a C++ library
 add_library(
@@ -33,13 +35,13 @@ ament_target_dependencies(
   layered_hardware
   pluginlib
   rclcpp
-  unitree_actuator_sdk_ros
-  yaml_cpp_vendor)
+  unitree_actuator_sdk_ros)
+target_link_libraries(
+  layered_hardware_unitree_plugins
+  ${YAML_CPP_LIBRARIES})
 
-## Declare a C++ executable
-
+## Install resources
 pluginlib_export_plugin_description_file(layered_hardware plugins.xml)
-
 install(
   TARGETS layered_hardware_unitree_plugins
   ARCHIVE DESTINATION lib
