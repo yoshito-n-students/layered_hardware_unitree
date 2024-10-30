@@ -15,8 +15,9 @@ find_package(layered_hardware REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(unitree_actuator_sdk_ros REQUIRED)
+# yaml_cpp_vendor builds yaml-cpp if not installed
+find_package(yaml_cpp_vendor REQUIRED)
 
-## Find system dependencies
 find_package(yaml-cpp REQUIRED)
 
 ## Declare a C++ library
@@ -35,7 +36,8 @@ ament_target_dependencies(
   layered_hardware
   pluginlib
   rclcpp
-  unitree_actuator_sdk_ros)
+  unitree_actuator_sdk_ros
+  yaml_cpp_vendor)
 target_link_libraries(
   layered_hardware_unitree_plugins
   ${YAML_CPP_LIBRARIES})
