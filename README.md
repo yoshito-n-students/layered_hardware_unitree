@@ -34,7 +34,7 @@ ___<layer_name>.actuators.<actuator_name>.operating_mode_map___ (map, required)
 * possible operation mode names are 'brake', 'position', 'torque' & 'velocity'
 
 #### Example of parameter description
-```xml
+```yaml
 <param name="example_unitree_actuator_layer">
     serial_interface: /dev/serial/by-id/...
     actuators:
