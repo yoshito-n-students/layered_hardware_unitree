@@ -51,4 +51,4 @@ ___<layer_name>.actuators.<actuator_name>.operating_mode_map___ (map, required)
 ```
 
 ## Example
-see [examples](examples)
+see [examples](layered_hardware_unitree/examples)
