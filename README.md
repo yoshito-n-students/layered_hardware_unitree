@@ -1,20 +1,19 @@
 # layered_hardware_unitree
 A ros2_control layer implementation for Unitree actuators. See [layered_hardware](https://github.com/yoshito-n-students/layered_hardware/tree/jazzy) to understand the layered scheme.
 
-## Plugins: layered_hardware_unitree_plugins
-### layered_hardware_unitree/UnitreeActuatorLayer
+## Layer plugin: layered_hardware_unitree/UnitreeActuatorLayer
 * sends commands to Unitree actuators within `write()` function
-* fetches states of actuators within `read()` function
+* fetches actuators' states within `read()` function
 * switches actuators' operation modes within `perform_command_mode_swtich()` function when controllers using associated interfaces activate
 
-#### Hardware parameters
+### Hardware parameters
 ___<layer_name>___ (yaml, required)
 * map of parameter names and values for this layer
 
 ___<layer_name>.serial_interface___ (string, default: '/dev/ttyUSB0')
 * path to USB-serial converter for Unitree actuators
 
-___<layer_name>.actuators___ (map, required)
+___<layer_name>.actuators___ (map<string, map>, required)
 * map of parameters for each actuator
 
 ___<layer_name>.actuators.<actuator_name>.id___ (int, required)
@@ -29,7 +28,7 @@ ___<layer_name>.actuators.<actuator_name>.pos_gain___ (double, default: 0.1)
 ___<layer_name>.actuators.<actuator_name>.vel_gain___ (double, default: 0.05)
 * control gain for actuator velocity (Kd)
 
-___<layer_name>.actuators.<actuator_name>.operating_mode_map___ (map, required)
+___<layer_name>.actuators.<actuator_name>.operating_mode_map___ (map<string, string>, required)
 * map to actuator's operation mode names from associated interface names (typically joint interfaces)
 * possible operation mode names are 'brake', 'position', 'torque' & 'velocity'
 
@@ -51,4 +50,4 @@ ___<layer_name>.actuators.<actuator_name>.operating_mode_map___ (map, required)
 ```
 
 ## Example
-see [examples](layered_hardware_unitree/examples)
+* [single Unitree actuator](layered_hardware_unitree/examples/single_unitree)
