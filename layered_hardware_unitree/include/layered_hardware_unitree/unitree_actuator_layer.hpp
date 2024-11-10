@@ -40,7 +40,7 @@ public:
     // find parameter group for this layer
     const auto params_it = hardware_info.hardware_parameters.find(layer_name);
     if (params_it == hardware_info.hardware_parameters.end()) {
-      LHU_ERROR("UnitreeActuatorLayer::on_init(): \"%s\" parameter is missing", layer_name.c_str());
+      lhu_error("UnitreeActuatorLayer::on_init(): \"%s\" parameter is missing", layer_name);
       return CallbackReturn::ERROR;
     }
 
@@ -56,8 +56,8 @@ public:
         ator_params.emplace_back(name_param_pair.second);
       }
     } catch (const YAML::Exception &error) {
-      LHU_ERROR("UnitreeActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
-                error.what(), layer_name.c_str());
+      lhu_error("UnitreeActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
+                error, layer_name);
       return CallbackReturn::ERROR;
     }
 
@@ -66,7 +66,7 @@ public:
     try {
       serial.reset(new uasr::SerialPort(serial_iface));
     } catch (const std::runtime_error &error) {
-      LHU_ERROR("UnitreeActuatorLayer::on_init(): Failed to open SerialPort: %s", error.what());
+      lhu_error("UnitreeActuatorLayer::on_init(): Failed to open SerialPort: %s", error);
       return CallbackReturn::ERROR;
     }
 
@@ -77,8 +77,7 @@ public:
       } catch (const std::runtime_error &error) {
         return CallbackReturn::ERROR;
       }
-      LHU_INFO("UnitreeActuatorLayer::init(): Initialized the actuator \"%s\"",
-               ator_names[i].c_str());
+      lhu_info("UnitreeActuatorLayer::init(): Initialized the actuator \"%s\"", ator_names[i]);
     }
 
     return CallbackReturn::SUCCESS;

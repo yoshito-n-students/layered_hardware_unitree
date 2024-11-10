@@ -101,9 +101,9 @@ public:
     if (active_bound_ifaces.size() <= 1) {
       return hi::return_type::OK;
     } else { // active_bound_ifaces.size() >= 2
-      LHU_ERROR("UnitreeActuatorDriver::prepare_command_mode_switch(): "
+      lhu_error("UnitreeActuatorDriver::prepare_command_mode_switch(): "
                 "Reject mode switching of %s because %zd bound interfaces are about to be active",
-                get_display_name(*context_).c_str(), active_bound_ifaces.size());
+                get_display_name(*context_), active_bound_ifaces.size());
       return hi::return_type::ERROR;
     }
   }
@@ -112,9 +112,9 @@ public:
     // check how many interfaces associated with actuator command mode are active
     const std::vector<std::size_t> active_bound_ifaces = active_interfaces.find(bound_interfaces_);
     if (active_bound_ifaces.size() >= 2) {
-      LHU_ERROR("UnitreeActuatorDriver::perform_command_mode_switch(): "
+      lhu_error("UnitreeActuatorDriver::perform_command_mode_switch(): "
                 "Could not switch mode of %s because %zd bound interfaces are active",
-                get_display_name(*context_).c_str(), bound_interfaces_.size());
+                get_display_name(*context_), bound_interfaces_.size());
       return hi::return_type::ERROR;
     }
 
@@ -164,17 +164,17 @@ private:
     }
     // stop present mode
     if (present_mode_) {
-      LHU_INFO(
+      lhu_info(
           "UnitreeActuatorDriver::switch_operating_modes(): Stopping \"%s\" operating mode for %s",
-          present_mode_->get_name().c_str(), get_display_name(*context_).c_str());
+          present_mode_->get_name(), get_display_name(*context_));
       present_mode_->stopping();
       present_mode_.reset();
     }
     // start new mode
     if (new_mode) {
-      LHU_INFO(
+      lhu_info(
           "UnitreeActuatorDriver::switch_operating_modes(): Starting \"%s\" operating mode for %s",
-          new_mode->get_name().c_str(), get_display_name(*context_).c_str());
+          new_mode->get_name(), get_display_name(*context_));
       new_mode->starting();
       present_mode_ = new_mode;
     }
